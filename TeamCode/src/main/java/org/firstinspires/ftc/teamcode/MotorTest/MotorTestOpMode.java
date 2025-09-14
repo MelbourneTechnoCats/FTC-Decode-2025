@@ -22,7 +22,10 @@ public class MotorTestOpMode extends CommandOpMode {
         _motor = new MotorSubsystem(hardwareMap.get(DcMotor.class, "motor"), telemetry);
 
         _gamepad.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whileHeld(new RunCommand(() -> {_motor.runMotor(1);}, _motor))
+                .whileHeld(new RunCommand(() -> {_motor.runMotor(0.5);}, _motor))
+                .whenReleased(new InstantCommand(_motor::stopMotor, _motor));
+        _gamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+                .whileHeld(new RunCommand(() -> {_motor.runMotor(-0.5);}, _motor))
                 .whenReleased(new InstantCommand(_motor::stopMotor, _motor));
     }
 }
