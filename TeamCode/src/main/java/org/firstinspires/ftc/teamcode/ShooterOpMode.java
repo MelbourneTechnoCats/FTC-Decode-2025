@@ -16,7 +16,7 @@ public class ShooterOpMode extends CommandOpMode {
     @Override
     public void initialize() {
         m_shootGamepad = new GamepadEx(gamepad1);
-        m_shooterSubsystem = new ShooterSubsystem(hardwareMap);
+        m_shooterSubsystem = new ShooterSubsystem(hardwareMap, telemetry);
 
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
                 .whenPressed(m_shooterSubsystem.runCommand(180, 1)).whenReleased(

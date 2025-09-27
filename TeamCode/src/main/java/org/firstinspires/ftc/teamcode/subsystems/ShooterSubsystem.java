@@ -22,26 +22,26 @@ public class ShooterSubsystem extends SubsystemBase {
     private Telemetry m_telemetry;
     static final double MIN_ANGLE = 0;
     static final double MAX_ANGLE = 300;
-    public ShooterSubsystem(final HardwareMap hardwareMap){
+    public ShooterSubsystem(final HardwareMap hardwareMap, Telemetry telemetry){
          m_servo = new SimpleServo(hardwareMap, "shooterServo", MIN_ANGLE, MAX_ANGLE);
          m_leftMotor = new MotorEx(hardwareMap, "leftShooterMotor");
          m_rightMotor = new MotorEx(hardwareMap, "rightShooterMotor");
-         m_rightMotor.setInverted(true);
+         m_leftMotor.setInverted(true);
          m_motorGroup = new MotorGroup(m_leftMotor, m_rightMotor);
-
+         m_telemetry = telemetry;
 
 
     }
     public void periodic() {
         double velocity = m_motorGroup.getVelocity();
-        double position = m_motorGroup.getCurrentPosition(); // substitutes for angle
-        double revolutions = m_motorGroup.encoder.getRevolutions();
-        double distance = m_motorGroup.encoder.getDistance();
-
+//        double position = m_motorGroup.getCurrentPosition(); // substitutes for angle
+//        double revolutions = m_motorGroup.encoder.getRevolutions();
+//        double distance = m_motorGroup.encoder.getDistance();
+//
         m_telemetry.addData("Velocity", velocity);
-        m_telemetry.addData("Position", position);
-        m_telemetry.addData("Revolutions", revolutions);
-        m_telemetry.addData("Distance", distance);
+////        m_telemetry.addData("Position", position);
+//        m_telemetry.addData("Revolutions", revolutions);
+//        m_telemetry.addData("Distance", distance);
         m_telemetry.update();
 
     }
