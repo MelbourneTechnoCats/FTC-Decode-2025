@@ -30,5 +30,29 @@ public class ShooterOpMode extends CommandOpMode {
                                 }
                         )
                 );
+        m_shootGamepad.getGamepadButton(GamepadKeys.Button.B)
+                .whenPressed(new InstantCommand(
+                        () -> {
+                            m_shooterSubsystem.setAngle(180);
+                        }
+                ));
+        m_shootGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whileHeld(
+                        new InstantCommand(
+                                () -> {
+                                    m_shooterSubsystem.turnByAngle(-1);
+
+                                }
+                        )
+                );
+        m_shootGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whileHeld(
+                        new InstantCommand(
+                                () -> {
+                                    m_shooterSubsystem.turnByAngle(1);
+                                }
+                        )
+                );
+
     }
 }

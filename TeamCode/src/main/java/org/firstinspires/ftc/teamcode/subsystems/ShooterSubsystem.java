@@ -46,11 +46,18 @@ public class ShooterSubsystem extends SubsystemBase {
     public void run(){
         m_motorGroup.set(1);
     }
-    public void runAtPower(double power){
+    public void setPower(double power){
         m_motorGroup.set(power);
     }
 
     public void stop(){
         m_motorGroup.stopMotor();
+    }
+
+    public void setAngle(double angle){
+        m_servo.turnToAngle(angle);
+    }
+    public void turnByAngle(double angle){
+        m_servo.rotateByAngle(angle);
     }
 }
