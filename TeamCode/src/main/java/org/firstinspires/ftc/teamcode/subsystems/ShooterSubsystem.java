@@ -43,9 +43,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     }
 
-    public void run(){
-        m_motorGroup.set(1);
-    }
+
     public void setPower(double power){
         m_motorGroup.set(power);
     }

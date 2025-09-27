@@ -21,7 +21,7 @@ public class ShooterOpMode extends CommandOpMode {
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
                 .whenPressed(new InstantCommand(
                         () -> {
-                            m_shooterSubsystem.run();
+                            m_shooterSubsystem.setPower(1);
                         }
                 )).whenReleased(
                         new InstantCommand(
