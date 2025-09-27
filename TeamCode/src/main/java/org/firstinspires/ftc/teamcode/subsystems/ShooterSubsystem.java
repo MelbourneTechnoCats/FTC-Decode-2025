@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -57,5 +60,18 @@ public class ShooterSubsystem extends SubsystemBase {
     }
     public void turnByAngle(double angle){
         m_servo.rotateByAngle(angle);
+    }
+
+    public Command runCommand(double angle, double power)
+    {
+        return new RunCommand(() -> {
+            setAngle(angle);
+            setPower(power);
+        }, this).whenFinished(this::stop);
+    }
+
+    public Command stopCommand()
+    {
+        return new InstantCommand(this::stop, this);
     }
 }

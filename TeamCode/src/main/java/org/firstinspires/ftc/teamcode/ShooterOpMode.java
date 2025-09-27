@@ -19,23 +19,9 @@ public class ShooterOpMode extends CommandOpMode {
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap);
 
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(new InstantCommand(
-                        () -> {
-                            m_shooterSubsystem.setPower(1);
-                        } , m_shooterSubsystem
-                )).whenReleased(
-                        new InstantCommand(
-                                () -> {
-                                    m_shooterSubsystem.stop();
-                                }, m_shooterSubsystem
-                        )
+                .whenPressed(m_shooterSubsystem.runCommand(180, 1)).whenReleased(
+                        m_shooterSubsystem.stopCommand()
                 );
-        m_shootGamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenPressed(new InstantCommand(
-                        () -> {
-                            m_shooterSubsystem.setAngle(180);
-                        }, m_shooterSubsystem
-                ));
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whileHeld(
                         new InstantCommand(
