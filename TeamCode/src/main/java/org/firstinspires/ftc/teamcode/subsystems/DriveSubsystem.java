@@ -2,8 +2,9 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Vector2d;
+import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 
@@ -12,7 +13,6 @@ import org.firstinspires.ftc.teamcode.MecanumDrive;
 
 public class DriveSubsystem extends SubsystemBase {
     private Telemetry m_telemetry;
-    private IMU m_imu;
     private MecanumDrive m_drive;
 
     private double m_xSpeed = 0, m_ySpeed = 0, m_rotSpeed = 0;
@@ -25,15 +25,24 @@ public class DriveSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-//        double heading = m_imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-//        m_telemetry.addData("Robot heading", heading);
-//        m_telemetry.update();
+        Rotation2d heading = getHeading();
+        m_telemetry.addData("Robot heading (deg)", heading.getDegrees());
+        m_telemetry.update();
 
-            m_drive.setDrivePowers(
-                    new PoseVelocity2d(
-                            new Vector2d(m_xSpeed, m_ySpeed),
-                       m_rotSpeed));
+       Vector2d linearVelocity =
+                new Vector2d(m_xSpeed, m_ySpeed);
+        if (m_fieldCentric) {
+            linearVelocity = linearVelocity.rotateBy(-heading.getDegrees());
+        }
 
+        m_drive.setDrivePowers(
+                new PoseVelocity2d(
+                        new com.acmerobotics.roadrunner.Vector2d(
+                                linearVelocity.getX(), linearVelocity.getY()
+                        ),
+                        m_rotSpeed
+                )
+        );
     }
 
     /* set velocity to run the drivetrain at */
@@ -45,7 +54,8 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     /* get the drivetrain's heading */
-//    public Rotation2d getHeading() {
-//        return new Rotation2d(m_imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
-//    }
+    public Rotation2d getHeading() {
+        double heading = m_drive.localizer.getPose().heading.toDouble(); // in radians
+        return new Rotation2d(heading);
+    }
 }
