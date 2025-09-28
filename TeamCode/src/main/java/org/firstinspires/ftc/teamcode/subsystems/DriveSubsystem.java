@@ -45,11 +45,12 @@ public class DriveSubsystem extends SubsystemBase {
         );
     }
 
-    /* set velocity to run the drivetrain at */
+    /* set velocity to run the drivetrain at (xSpeed and ySpeed in m/s, rotSpeed in rad/s */
     public void drive(double xSpeed, double ySpeed, double rotSpeed, boolean fieldCentric) {
-        m_xSpeed = xSpeed;
-        m_ySpeed = ySpeed;
-        m_rotSpeed = rotSpeed;
+        // NOTE: m_xSpeed and m_ySpeed are in in/s
+        m_xSpeed = xSpeed / 0.0254;
+        m_ySpeed = ySpeed / 0.0254;
+        m_rotSpeed = rotSpeed; // m_rotSpeed is in rad/s
         m_fieldCentric = fieldCentric;
     }
 
