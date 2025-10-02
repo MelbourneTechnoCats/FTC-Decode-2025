@@ -38,19 +38,20 @@ public class DriveSubsystem extends SubsystemBase {
         m_drive.setDrivePowers(
                 new PoseVelocity2d(
                         new com.acmerobotics.roadrunner.Vector2d(
-                                linearVelocity.getX(), linearVelocity.getY()
-                        ),
+                                linearVelocity.getY(), -linearVelocity.getX()
+                        ), // NOTE: RR has the X and Y axes swapped (rotated by 90deg)
                         m_rotSpeed
                 )
         );
+        m_drive.updatePoseEstimate();
     }
 
     /* set velocity to run the drivetrain at (xSpeed and ySpeed in m/s, rotSpeed in rad/s */
     public void drive(double xSpeed, double ySpeed, double rotSpeed, boolean fieldCentric) {
-        // NOTE: m_xSpeed and m_ySpeed are in in/s
-        m_xSpeed = xSpeed / 0.0254;
-        m_ySpeed = ySpeed / 0.0254;
-        m_rotSpeed = rotSpeed; // m_rotSpeed is in rad/s
+        // NOTE: m_xSpeed, m_ySpeed and m_rotSpeed are unitless!
+        m_xSpeed = xSpeed;
+        m_ySpeed = ySpeed;
+        m_rotSpeed = rotSpeed;
         m_fieldCentric = fieldCentric;
     }
 
