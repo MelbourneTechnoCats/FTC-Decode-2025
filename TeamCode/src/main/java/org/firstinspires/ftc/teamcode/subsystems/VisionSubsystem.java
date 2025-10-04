@@ -1,0 +1,86 @@
+package org.firstinspires.ftc.teamcode.subsystems;
+
+import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.geometry.Vector2d;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.Collections;
+import java.util.List;
+
+public class VisionSubsystem extends SubsystemBase {
+    /* camera pose on robot - used for robot pose determination */
+    private static final Position kCameraPosition = new Position(DistanceUnit.CM,
+            0, 0, 0, 0);
+    private static final YawPitchRollAngles kCameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
+            0, 0, 0, 0);
+
+    private AprilTagProcessor m_tagProcessor;
+    private VisionPortal m_visionPortal;
+
+    private double m_xPosition, m_yPosition, m_heading;
+
+    private Telemetry m_telemetry;
+
+    public VisionSubsystem(final HardwareMap hardwareMap, final Telemetry telemetry) {
+        m_telemetry = telemetry;
+
+        /* create the AprilTag processor */
+        m_tagProcessor = new AprilTagProcessor.Builder()
+                .setCameraPose(kCameraPosition, kCameraOrientation)
+                .build();
+
+        m_visionPortal = new VisionPortal.Builder()
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .enableLiveView(true)
+                .addProcessor(m_tagProcessor)
+                .build();
+    }
+
+    @Override
+    public void periodic() {
+        List<AprilTagDetection> detections = m_tagProcessor.getDetections();
+
+        double meanX = 0, meanY = 0, meanEndX = 0, meanEndY = 0;
+        int numPoints = 0;
+        for (AprilTagDetection detection : detections) {
+            if (!detection.metadata.name.contains("Obelisk")) {
+                Position pos = detection.robotPose.getPosition();
+                meanX += pos.x; meanY += pos.y;
+                Vector2d vec = new Vector2d(144, 0).rotateBy(
+                        detection.robotPose.getOrientation().getYaw(AngleUnit.DEGREES)
+                );
+                meanEndX += pos.x + vec.getX();
+                meanEndY += pos.y + vec.getY();
+                numPoints++;
+            }
+        }
+
+        m_telemetry.addData("Number of localisation tags", numPoints);
+
+        if (numPoints > 0) {
+            meanX /= numPoints; meanY /= numPoints;
+            meanEndX /= numPoints; meanEndY /= numPoints;
+
+            m_xPosition = meanX; m_yPosition = meanY;
+
+            Vector2d vec = new Vector2d(meanEndX - meanX, meanEndY - meanY);
+            m_heading = Math.toDegrees(vec.angle());
+
+            m_telemetry.addData("Vision X", m_xPosition);
+            m_telemetry.addData("Vision Y", m_yPosition);
+            m_telemetry.addData("Vision heading", m_heading);
+        }
+
+        m_telemetry.update();
+    }
+}
