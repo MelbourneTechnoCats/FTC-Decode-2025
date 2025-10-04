@@ -22,7 +22,7 @@ public class VisionSubsystem extends SubsystemBase {
     private static final Position kCameraPosition = new Position(DistanceUnit.CM,
             0, 0, 0, 0);
     private static final YawPitchRollAngles kCameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, 0, 0, 0);
+            0, -90, 0, 0);
 
     private AprilTagProcessor m_tagProcessor;
     private VisionPortal m_visionPortal;
