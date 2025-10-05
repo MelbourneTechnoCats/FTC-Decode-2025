@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
@@ -18,9 +19,22 @@ public class DriveSubsystem extends SubsystemBase {
     private double m_xSpeed = 0, m_ySpeed = 0, m_rotSpeed = 0;
     private boolean m_fieldCentric = false;
 
+    private VisionSubsystem m_vision;
+
     public DriveSubsystem(final HardwareMap hardwareMap, Pose2d pose, final Telemetry telemetry) {
         m_telemetry = telemetry;
         m_drive = new MecanumDrive(hardwareMap, pose);
+    }
+
+    public DriveSubsystem(final HardwareMap hardwareMap, Pose2d pose, final Telemetry telemetry, final VisionSubsystem vision) {
+        m_telemetry = telemetry;
+        m_drive = new MecanumDrive(hardwareMap, pose);
+        m_vision = vision;
+        m_vision.m_poseTrigger.whileActiveContinuous(
+                new RunCommand(() -> {
+                    setPose(m_vision.getLastPose());
+                })
+        );
     }
 
     @Override
@@ -59,5 +73,20 @@ public class DriveSubsystem extends SubsystemBase {
     public Rotation2d getHeading() {
         double heading = m_drive.localizer.getPose().heading.toDouble(); // in radians
         return new Rotation2d(heading);
+    }
+
+    /* set robot pose */
+    public void setPose(com.arcrobotics.ftclib.geometry.Pose2d pose) {
+        Pose2d rrPose = new Pose2d(pose.getX(), pose.getY(), pose.getHeading());
+        m_drive.localizer.setPose(rrPose);
+    }
+
+    /* get robot pose */
+    public com.arcrobotics.ftclib.geometry.Pose2d getPose() {
+        Pose2d rrPose = m_drive.localizer.getPose();
+        return new com.arcrobotics.ftclib.geometry.Pose2d(
+                rrPose.position.x, rrPose.position.y,
+                new Rotation2d(rrPose.heading.toDouble())
+        );
     }
 }

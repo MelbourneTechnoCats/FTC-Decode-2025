@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.command.button.Trigger;
+import com.arcrobotics.ftclib.geometry.Pose2d;
+import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -31,6 +34,16 @@ public class VisionSubsystem extends SubsystemBase {
 
     private Telemetry m_telemetry;
 
+    public class PoseTrigger extends Trigger {
+        boolean m_update = false; // true if there's a pose update in this iteration
+
+        @Override
+        public boolean get() {
+            return m_update;
+        }
+    }
+    public final PoseTrigger m_poseTrigger = new PoseTrigger();
+
     public VisionSubsystem(final HardwareMap hardwareMap, final Telemetry telemetry) {
         m_telemetry = telemetry;
 
@@ -48,6 +61,8 @@ public class VisionSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        m_poseTrigger.m_update = false;
+
         List<AprilTagDetection> detections = m_tagProcessor.getDetections();
 
         double meanX = 0, meanY = 0, meanEndX = 0, meanEndY = 0;
@@ -65,7 +80,7 @@ public class VisionSubsystem extends SubsystemBase {
             }
         }
 
-        m_telemetry.addData("Number of localisation tags", numPoints);
+//        m_telemetry.addData("Number of localisation tags", numPoints);
 
         if (numPoints > 0) {
             meanX /= numPoints; meanY /= numPoints;
@@ -76,11 +91,17 @@ public class VisionSubsystem extends SubsystemBase {
             Vector2d vec = new Vector2d(meanEndX - meanX, meanEndY - meanY);
             m_heading = Math.toDegrees(vec.angle());
 
-            m_telemetry.addData("Vision X", m_xPosition);
-            m_telemetry.addData("Vision Y", m_yPosition);
-            m_telemetry.addData("Vision heading", m_heading);
+//            m_telemetry.addData("Vision X", m_xPosition);
+//            m_telemetry.addData("Vision Y", m_yPosition);
+//            m_telemetry.addData("Vision heading", m_heading);
+
+            m_poseTrigger.m_update = true;
         }
 
-        m_telemetry.update();
+//        m_telemetry.update();
+    }
+
+    public Pose2d getLastPose() {
+        return new Pose2d(m_xPosition, m_yPosition, new Rotation2d(Math.toRadians(m_heading)));
     }
 }
