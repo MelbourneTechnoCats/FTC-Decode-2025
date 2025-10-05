@@ -23,7 +23,7 @@ import java.util.List;
 public class VisionSubsystem extends SubsystemBase {
     /* camera pose on robot - used for robot pose determination */
     private static final Position kCameraPosition = new Position(DistanceUnit.CM,
-            0, 0, 0, 0);
+            19, 20.5, 34, 0);
     private static final YawPitchRollAngles kCameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
             0, -90, 0, 0);
 
