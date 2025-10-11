@@ -15,9 +15,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-import java.util.Collections;
 import java.util.List;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -26,13 +26,13 @@ public class VisionSubsystem extends SubsystemBase {
             19, 20.5, 34, 0);
     private static final YawPitchRollAngles kCameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
             0, -90, 0, 0);
-
     private AprilTagProcessor m_tagProcessor;
     private VisionPortal m_visionPortal;
 
     private double m_xPosition, m_yPosition, m_heading;
 
     private Telemetry m_telemetry;
+    private AprilTagPoseFtc m_redTargetPose, m_blueTargetPose;
 
     public class PoseTrigger extends Trigger {
         boolean m_update = false; // true if there's a pose update in this iteration
@@ -61,6 +61,8 @@ public class VisionSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        m_blueTargetPose = null;
+        m_redTargetPose = null;
         m_poseTrigger.m_update = false;
 
         List<AprilTagDetection> detections = m_tagProcessor.getDetections();
@@ -77,6 +79,13 @@ public class VisionSubsystem extends SubsystemBase {
                 meanEndX += pos.x + vec.getX();
                 meanEndY += pos.y + vec.getY();
                 numPoints++;
+                if (detection.metadata.id == 20){
+                    m_blueTargetPose = detection.ftcPose;
+                }
+                else if (detection.metadata.id == 24)
+                {
+                    m_redTargetPose = detection.ftcPose;
+                }
             }
         }
 
@@ -103,5 +112,15 @@ public class VisionSubsystem extends SubsystemBase {
 
     public Pose2d getLastPose() {
         return new Pose2d(m_xPosition, m_yPosition, new Rotation2d(Math.toRadians(m_heading)));
+    }
+
+    public AprilTagPoseFtc getRedTargetPose()
+    {
+        return m_redTargetPose;
+    }
+
+    public AprilTagPoseFtc getBlueTargetPose()
+    {
+        return m_blueTargetPose;
     }
 }
