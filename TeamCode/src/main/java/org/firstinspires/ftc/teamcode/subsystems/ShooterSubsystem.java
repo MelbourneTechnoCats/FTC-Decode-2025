@@ -5,7 +5,6 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -23,8 +22,8 @@ public class ShooterSubsystem extends SubsystemBase {
  private static final double kshooterI = 0;
  private static final double kshooterD = 0;
  private static final double kshooterA = 0;
- private static final double kshooterS = 0;
- private static final double kshooterV = 0;
+ public static double kshooterS = 1.5;
+ public static double kshooterV = 0;
  private static final double kshooterGearRatio = 3;
  private  static final double kshooterEncoderResolution = 28*kshooterGearRatio;
  private static final double kshooterMaxSpeed = 6000/kshooterGearRatio;
@@ -35,9 +34,9 @@ public class ShooterSubsystem extends SubsystemBase {
          m_servo = new SimpleServo(hardwareMap, "shooterServo", MIN_ANGLE, MAX_ANGLE);
          m_leftMotor = new MotorEx(hardwareMap, "leftShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed );
          m_rightMotor = new MotorEx(hardwareMap, "rightShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed);
-         m_leftMotor.setInverted(true);
+         m_rightMotor.setInverted(true);
          m_motorGroup = new MotorGroup(m_leftMotor, m_rightMotor);
-        m_motorGroup.setRunMode(Motor.RunMode.VelocityControl);
+//        m_motorGroup.setRunMode(Motor.RunMode.VelocityControl);
         m_motorGroup.setVeloCoefficients(kshooterP,kshooterI,kshooterD);
         m_motorGroup.setFeedforwardCoefficients(kshooterS, kshooterV, kshooterA);
          m_telemetry = telemetry;
@@ -51,6 +50,9 @@ public class ShooterSubsystem extends SubsystemBase {
 //        double distance = m_motorGroup.encoder.getDistance();
 //
         m_telemetry.addData("Velocity", velocity);
+        m_motorGroup.setFeedforwardCoefficients(kshooterS, kshooterV);
+        m_telemetry.addData("KS", kshooterS);
+        m_telemetry.addData("KV",kshooterV );
 ////        m_telemetry.addData("Position", position);
 //        m_telemetry.addData("Revolutions", revolutions);
 //        m_telemetry.addData("Distance", distance);
@@ -61,7 +63,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void setVelocity(double velocity){
         velocity = velocity/60*kshooterEncoderResolution;
-        m_motorGroup.set(velocity);
+//        m_motorGroup.set(velocity);
+        m_motorGroup.set(1);
     }
 
     public void stop(){
