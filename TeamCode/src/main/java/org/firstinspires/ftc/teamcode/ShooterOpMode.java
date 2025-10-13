@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -18,24 +19,26 @@ public class ShooterOpMode extends CommandOpMode {
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, telemetry);
 
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(m_shooterSubsystem.runCommand(180, 1000)).whenReleased(
+                .whenPressed(m_shooterSubsystem.runCommand(180, 1)).whenReleased(
                         m_shooterSubsystem.stopCommand()
                 );
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(
-                        () -> { ShooterSubsystem.kshooterS += 0.1; }
+                .whileHeld(
+                        new InstantCommand(
+                                () -> {
+                                    m_shooterSubsystem.turnByAngle(-1);
+
+                                }, m_shooterSubsystem
+                        )
                 );
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(
-                        () -> { ShooterSubsystem.kshooterS -= 0.1; }
+                .whileHeld(
+                        new InstantCommand(
+                                () -> {
+                                    m_shooterSubsystem.turnByAngle(1);
+                                }, m_shooterSubsystem
+                        )
                 );
-        m_shootGamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                .whenPressed(
-                        () -> { ShooterSubsystem.kshooterV += 0.1; }
-                );
-        m_shootGamepad.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(
-                        () -> { ShooterSubsystem.kshooterV -= 0.1; }
-                );
+
     }
 }
