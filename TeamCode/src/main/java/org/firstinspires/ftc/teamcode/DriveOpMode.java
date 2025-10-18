@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
@@ -30,7 +31,7 @@ public class DriveOpMode extends CommandOpMode {
     @Override
     public void initialize() {
         m_driveGamepad = new GamepadEx(gamepad1);
-        m_driveSubsystem = new DriveSubsystem(hardwareMap, telemetry);
+        m_driveSubsystem = new DriveSubsystem(hardwareMap,new Pose2d(0,0,0), telemetry);
         m_driveSubsystem.setDefaultCommand(new RunCommand(
                 () -> {
                     double leftX = m_driveGamepad.getLeftX();
