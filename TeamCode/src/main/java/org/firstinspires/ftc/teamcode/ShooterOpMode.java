@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -15,11 +17,13 @@ public class ShooterOpMode extends CommandOpMode {
 
     @Override
     public void initialize() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
         m_shootGamepad = new GamepadEx(gamepad1);
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, telemetry);
 
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(m_shooterSubsystem.runCommand(180, 1)).whenReleased(
+                .whenPressed(m_shooterSubsystem.runCommand(180, 1800)).whenReleased(
                         m_shooterSubsystem.stopCommand()
                 );
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
