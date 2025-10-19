@@ -22,10 +22,10 @@ import java.util.List;
 
 public class VisionSubsystem extends SubsystemBase {
     /* camera pose on robot - used for robot pose determination */
-    static final Position kCameraPosition = new Position(DistanceUnit.CM,
-            19, 20.5, 34, 0);
-    static final YawPitchRollAngles kCameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, -90, 0, 0);
+    private static final Position kCameraPosition = new Position(DistanceUnit.CM,
+            19, 15.7, 34, 0);
+    private static final YawPitchRollAngles kCameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
+            180, -90, 0, 0);
     private AprilTagProcessor m_tagProcessor;
     private VisionPortal m_visionPortal;
 
