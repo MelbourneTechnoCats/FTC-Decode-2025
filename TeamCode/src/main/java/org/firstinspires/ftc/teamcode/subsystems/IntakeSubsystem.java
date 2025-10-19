@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
+import com.arcrobotics.ftclib.command.StartEndCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -28,9 +29,10 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public Command runCommand()
     {
-        return new RunCommand(() -> {
-            runMotor();
-        }, this).whenFinished(this::stopMotor);
+        return new StartEndCommand(
+                this::runMotor, this::stopMotor,
+                this
+        );
     }
 
     public Command stopCommand()
