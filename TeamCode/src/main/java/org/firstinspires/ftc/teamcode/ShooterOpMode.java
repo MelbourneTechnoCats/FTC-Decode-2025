@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -11,9 +13,12 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 @TeleOp
+@Config
 public class ShooterOpMode extends CommandOpMode {
     private GamepadEx m_shootGamepad;
     private ShooterSubsystem m_shooterSubsystem;
+
+    public static double m_velocity = 1800;
 
     @Override
     public void initialize() {
@@ -23,7 +28,9 @@ public class ShooterOpMode extends CommandOpMode {
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, telemetry);
 
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(m_shooterSubsystem.runCommand(180, 1800)).whenReleased(
+                .whileHeld(new RunCommand(() -> {
+                    m_shooterSubsystem.setVelocity(m_velocity);
+                }, m_shooterSubsystem)).whenReleased(
                         m_shooterSubsystem.stopCommand()
                 );
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
