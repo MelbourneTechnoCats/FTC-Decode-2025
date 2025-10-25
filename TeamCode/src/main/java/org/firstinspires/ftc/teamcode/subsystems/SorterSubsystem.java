@@ -32,6 +32,8 @@ public class SorterSubsystem extends SubsystemBase {
     }
 
     public void setSorterAngle(int position, boolean toIntake){
+        setLeverAngle(true);
+
         /*
             position:
               0 - Compartment 1
