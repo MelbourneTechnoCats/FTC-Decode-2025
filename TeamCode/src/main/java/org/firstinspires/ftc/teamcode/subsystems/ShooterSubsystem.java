@@ -32,16 +32,25 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double kCameraX = kCameraPosition.y;
     private static final double kCameraY = kCameraPosition.z;
 
-    private static final double kShooterWheelDiameter = 7.2/100; /** in m **/
     /** constant names are in 2D, but position is in 3D **/
     /** if we change camera position, change the variables as well **/
     /// ////////////
     private static final double k_xOffset = 0;
     private static final double k_yOffset = 0;
     /** todo: get offset done **/
-    private static final double kShooterAngle = Math.toRadians(60); /** in rad **/
     private static final double kShooterHeight = 30.48/100; /** in m **/
     private static final double kGravity = 9.8; /** in m/s^2 **/
+
+    private static final double kShooterWheelInertia = 6.481E-5;// in kg.m^2
+
+    // NOTE: available from wheel velocity regression
+    private static final double kShooterWheelEfficiency = 0.7148; // a
+    private static final double kShooterWheelOffset = -33.607; // b (rad/s)
+
+    private static final double kArtifactMass = 84.75 / 1000; // in kg
+
+    private static final double kCoeffA = kShooterWheelInertia * (kShooterWheelEfficiency * kShooterWheelEfficiency - 1);
+    private static final double kCoeffB = kShooterWheelInertia * 2 * kShooterWheelEfficiency * kShooterWheelOffset;
 
     public ShooterSubsystem(final HardwareMap hardwareMap, Telemetry telemetry){
          m_servo = new SimpleServo(hardwareMap, "shooterServo", MIN_ANGLE, MAX_ANGLE);
@@ -50,27 +59,22 @@ public class ShooterSubsystem extends SubsystemBase {
          m_leftMotor.setInverted(true);
          m_motorGroup = new MotorGroup(m_leftMotor, m_rightMotor);
          m_telemetry = telemetry;
-
-
-
-
-
-
-
     }
 
-    public double getGoalVelocity(double range){
+    public double getGoalVelocity(double angle, double range){
         double tagX = kCameraX + Math.sqrt(range*range - Math.pow((kTagY - kCameraY), 2));
         double targetX = tagX + k_xOffset;
         double targetY = kTagY + k_yOffset;
-        double shooterTime = Math.sqrt(2*((targetX*kShooterAngle)-targetY+kShooterHeight)/kGravity);
-        double shooterVelocity = targetX*shooterTime/Math.cos(kShooterAngle);
-        double shooterRPM = 60*shooterVelocity/(2*Math.PI*kShooterWheelDiameter/2);
-        return shooterRPM;
 
+        double shootingTime = Math.sqrt((2 / kGravity) * ((targetX * Math.tan(angle)) - targetY + kShooterHeight));
+        double launchVelocity = targetX / (shootingTime * Math.cos(angle));
 
+        double coeffC = kShooterWheelInertia * kShooterWheelOffset * kShooterWheelOffset + 0.5 * kArtifactMass * launchVelocity * launchVelocity;
 
+        double angVelocity = (-kCoeffB - Math.sqrt(kCoeffB * kCoeffB - 4 * kCoeffA * coeffC)) / (2 * kCoeffA);
+        return (angVelocity * 60) / (2 * Math.PI);
     }
+
     public void periodic() {
         double velocity = m_motorGroup.getVelocity();
 //        double position = m_motorGroup.getCurrentPosition(); // substitutes for angle
