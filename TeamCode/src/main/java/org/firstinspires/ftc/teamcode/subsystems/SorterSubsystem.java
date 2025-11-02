@@ -35,7 +35,7 @@ public class SorterSubsystem extends SubsystemBase {
     static final double C0_LEVER_ANGLE = C2_LEVER_ANGLE - 120;
     static final double C1_LEVER_ANGLE = C2_LEVER_ANGLE + 120;
     static final double LEVER_RETRACT_ANGLE = 25;
-    static final double LEVER_EXTEND_ANGLE = LEVER_RETRACT_ANGLE + 40;
+    static final double LEVER_EXTEND_ANGLE = LEVER_RETRACT_ANGLE + 80;
     private int currentCompartment = 0;
     private boolean toIntake = true;
     static Colour[] occupancy = new Colour[]{Colour.NONE, Colour.NONE, Colour.NONE};
