@@ -77,10 +77,51 @@ public class SorterSubsystem extends SubsystemBase {
             default:
                 break;
         }
-
-
-
     }
+
+    public void feedUnoccupiedCompartment() {
+        for (int i = 0; i < 3; i++) {
+            if (occupancy[i] == Colour.NONE) {
+                setSorterAngle(i, true);
+                return;
+            }
+        }
+    }
+
+    public Command feedUnoccupiedCompartmentCommand() {
+        return new InstantCommand(this::feedUnoccupiedCompartment, this)
+                .andThen(new WaitCommand((long) WAIT_TIME));
+    }
+
+    public void loadIntoShooter(int position) {
+        setSorterAngle(position, false);
+        occupancy[position] = Colour.NONE;
+    }
+
+    public void loadIntoShooter(Colour colour) {
+        for (int pos = 0; pos < 3; pos++) {
+            if (occupancy[pos] == colour) {
+                loadIntoShooter(pos);
+                return;
+            }
+        }
+    }
+
+    public Command loadIntoShooterCommand(int position) {
+        return new InstantCommand(() -> {
+            loadIntoShooterCommand(position);
+        }, this)
+                .andThen(new WaitCommand((long) WAIT_TIME));
+    }
+
+
+    public Command loadIntoShooterCommand(Colour colour) {
+        return new InstantCommand(() -> {
+            loadIntoShooterCommand(colour);
+        }, this)
+                .andThen(new WaitCommand((long) WAIT_TIME));
+    }
+
     public Command getColourCommand(){
         AtomicInteger numPurple = new AtomicInteger();
         AtomicInteger numGreen = new AtomicInteger();

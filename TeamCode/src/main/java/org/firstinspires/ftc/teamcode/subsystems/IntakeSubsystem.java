@@ -49,8 +49,9 @@ public class IntakeSubsystem extends SubsystemBase {
 
     }
     public Command intakeCommand(){
-        return runCommand().interruptOn(this::isBallThere)
-                .andThen(_sorter.getColourCommand() );
+        return _sorter.feedUnoccupiedCompartmentCommand()
+                .andThen(runCommand().interruptOn(this::isBallThere))
+                .andThen(_sorter.getColourCommand());
     }
 
 
