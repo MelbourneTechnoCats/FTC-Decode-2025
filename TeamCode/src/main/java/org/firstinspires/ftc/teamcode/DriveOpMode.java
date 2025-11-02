@@ -10,12 +10,14 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 
 @TeleOp
 public class DriveOpMode extends CommandOpMode {
     private GamepadEx m_driveGamepad;
     private DriveSubsystem m_driveSubsystem;
     private IntakeSubsystem m_intakeSubsystem;
+    private SorterSubsystem m_sorterSubsystem;
     private boolean m_fieldCentric = false;
     public static double squareInput(double input){
 
@@ -34,7 +36,8 @@ public class DriveOpMode extends CommandOpMode {
     public void initialize() {
         m_driveGamepad = new GamepadEx(gamepad1);
         m_driveSubsystem = new DriveSubsystem(hardwareMap,new Pose2d(0,0,0), telemetry);
-        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
+        m_sorterSubsystem = new SorterSubsystem(hardwareMap);
+        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, m_sorterSubsystem, telemetry);
         m_driveSubsystem.setDefaultCommand(new RunCommand(
                 () -> {
                     double leftX = m_driveGamepad.getLeftX();
@@ -60,7 +63,7 @@ public class DriveOpMode extends CommandOpMode {
                         }
                 ));
 
-        m_driveGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .whileHeld(m_intakeSubsystem.runCommand());
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.A)
+                .whileHeld(m_intakeSubsystem.intakeCommand());
     }
 }
