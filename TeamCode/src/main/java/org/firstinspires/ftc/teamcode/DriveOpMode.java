@@ -55,6 +55,12 @@ public class DriveOpMode extends CommandOpMode {
                     );
                 }, m_driveSubsystem
         ));
+        m_sorterSubsystem.setDefaultCommand(new RunCommand(() -> {
+                telemetry.addLine("Sorter occupancy: ")
+                        .addData("0", m_sorterSubsystem.occupancy[0])
+                        .addData("1", m_sorterSubsystem.occupancy[1])
+                        .addData("2", m_sorterSubsystem.occupancy[2]);
+        }, m_sorterSubsystem));
 
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
                 .whenPressed(new InstantCommand(
@@ -65,5 +71,11 @@ public class DriveOpMode extends CommandOpMode {
 
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.A)
                 .whileHeld(m_intakeSubsystem.intakeCommand());
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.B)
+                .whenHeld(m_intakeSubsystem.intakeCommand());
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.Y)
+                .whenPressed(m_sorterSubsystem.loadIntoShooterCommand(SorterSubsystem.Colour.GREEN));
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.X)
+                .whenPressed(m_sorterSubsystem.loadIntoShooterCommand(SorterSubsystem.Colour.PURPLE));
     }
 }
