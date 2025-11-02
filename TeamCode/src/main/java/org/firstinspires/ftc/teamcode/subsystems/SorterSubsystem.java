@@ -44,10 +44,13 @@ public class SorterSubsystem extends SubsystemBase {
     private static final double WAIT_TIME = 200; // in ms
     private NormalizedColorSensor m_colourSensor;
 
+    private static float COLOUR_SENSOR_GAIN = 21;
+
     public SorterSubsystem(HardwareMap hardwareMap) {
         m_leverServo = new SimpleServo(hardwareMap, "leverServo", MIN_ANGLE, MAX_ANGLE);
         m_sorterServo = new SimpleServo(hardwareMap, "sorterServo", MIN_ANGLE, MAX_ANGLE);
         m_colourSensor = hardwareMap.get(NormalizedColorSensor.class, "sorterColour");
+        m_colourSensor.setGain(COLOUR_SENSOR_GAIN);
         m_hardwareMap = hardwareMap;
     }
 
@@ -194,7 +197,8 @@ public class SorterSubsystem extends SubsystemBase {
         GREEN
     }
 
-    private static final double kAlphaThreshold = 0.4;
+    private static final double kAlphaMinThreshold = 0.1;
+    private static final double kAlphaMaxThreshold = 0.16;
 
     private static final double kMinGreenHue = 90;
     private static final double kMaxGreenHue = 180;
@@ -204,7 +208,7 @@ public class SorterSubsystem extends SubsystemBase {
 
     public Colour getColour() {
         NormalizedRGBA colours = m_colourSensor.getNormalizedColors();
-        if (colours.alpha < kAlphaThreshold) return Colour.NONE;
+        if (colours.alpha >= kAlphaMinThreshold && colours.alpha <= kAlphaMaxThreshold) return Colour.NONE;
 
         float[] hsvColour = new float[3];
         Color.colorToHSV(colours.toColor(), hsvColour);
