@@ -111,7 +111,8 @@ public class SorterSubsystem extends SubsystemBase {
         return new InstantCommand(() -> {
             loadIntoShooterCommand(position);
         }, this)
-                .andThen(new WaitCommand((long) WAIT_TIME));
+                .andThen(new WaitCommand((long) WAIT_TIME))
+                .andThen(new InstantCommand(() -> { setLeverAngle(false); }, this));
     }
 
 
@@ -119,7 +120,8 @@ public class SorterSubsystem extends SubsystemBase {
         return new InstantCommand(() -> {
             loadIntoShooterCommand(colour);
         }, this)
-                .andThen(new WaitCommand((long) WAIT_TIME));
+                .andThen(new WaitCommand((long) WAIT_TIME))
+                .andThen(new InstantCommand(() -> { setLeverAngle(false); }, this));
     }
 
     public Command getColourCommand(){
