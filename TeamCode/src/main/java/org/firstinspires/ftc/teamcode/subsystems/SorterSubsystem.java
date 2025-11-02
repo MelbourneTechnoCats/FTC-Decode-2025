@@ -2,11 +2,19 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.graphics.Color;
 
+import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.RunCommand;
+import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SorterSubsystem extends SubsystemBase {
     HardwareMap m_hardwareMap;
@@ -28,7 +36,12 @@ public class SorterSubsystem extends SubsystemBase {
     static final double C1_LEVER_ANGLE = C2_LEVER_ANGLE + 120;
     static final double LEVER_RETRACT_ANGLE = 25;
     static final double LEVER_EXTEND_ANGLE = LEVER_RETRACT_ANGLE + 40;
+    private int currentCompartment = 0;
+    private boolean toIntake = true;
+    static Colour[] occupancy = new Colour[]{Colour.NONE, Colour.NONE, Colour.NONE};
 
+
+    private static final double WAIT_TIME = 200; // in ms
     private NormalizedColorSensor m_colourSensor;
 
     public SorterSubsystem(HardwareMap hardwareMap) {
@@ -40,6 +53,9 @@ public class SorterSubsystem extends SubsystemBase {
 
     public void setSorterAngle(int position, boolean toIntake){
         setLeverAngle(true);
+        currentCompartment = position;
+        this.toIntake = toIntake;
+
 
         /*
             position:
@@ -61,8 +77,69 @@ public class SorterSubsystem extends SubsystemBase {
             default:
                 break;
         }
-    }
 
+
+
+    }
+    public Command getColourCommand(){
+        AtomicInteger numPurple = new AtomicInteger();
+        AtomicInteger numGreen = new AtomicInteger();
+        return new SelectCommand(
+                new HashMap<Object, Command>(){{
+                    put(0, setAngleCommand(2, false));
+                    put(1, setAngleCommand(0, false));
+                    put(2, setAngleCommand(1, false));
+
+
+                }}, () -> {return currentCompartment;}
+        )
+                .andThen(new InstantCommand(() -> {
+                    numPurple.set(0);
+                    numGreen.set(0);
+                }))
+                .andThen(
+                        new RunCommand(
+                                () -> {
+                                    Colour colour = getColour();
+                                    switch (colour) {
+                                        case PURPLE:
+                                            numPurple.incrementAndGet();
+                                            break;
+                                        case GREEN:
+                                            numGreen.incrementAndGet();
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                        ).withTimeout((long) WAIT_TIME)
+                )
+                .andThen(
+                        new InstantCommand(() -> {
+                            int readingCompartment =0;
+                            switch (currentCompartment){
+                                case 0: readingCompartment = 1; break;
+                                case 1: readingCompartment = 2; break;
+                                case 2: readingCompartment = 0; break;
+                                default: break;
+                            }
+                            if (numGreen.get() > numPurple.get()){
+                                occupancy[readingCompartment] = Colour.GREEN;
+                            }
+                            if (numPurple.get() > numGreen.get()){
+                                occupancy[readingCompartment] = Colour.PURPLE;
+                            }
+                        }
+
+
+                ));
+    }
+    public Command setAngleCommand(int position, boolean toIntake){
+        return new InstantCommand(() -> {
+            setSorterAngle(position, toIntake);
+        }, this)
+                .andThen(new WaitCommand((long) WAIT_TIME));
+    }
     public void setLeverAngle(boolean retract)
     {
         m_leverServo.turnToAngle((retract ? LEVER_RETRACT_ANGLE : LEVER_EXTEND_ANGLE));
