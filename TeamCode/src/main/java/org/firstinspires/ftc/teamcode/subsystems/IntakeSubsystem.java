@@ -25,7 +25,7 @@ public class IntakeSubsystem extends SubsystemBase {
         _motor = new MotorEx(hardwareMap,"intakeMotor");
         _sorter = sorterSubsystem;
         _telemetry = telemetry;
-        _distSensor = hardwareMap.get(DistanceSensor.class, "sensor_distance");
+        _distSensor = hardwareMap.get(DistanceSensor.class, "intakeSensor");
     }
 
     public void runMotor() {
