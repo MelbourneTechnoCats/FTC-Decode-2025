@@ -61,6 +61,8 @@ public class ShooterSubsystem extends SubsystemBase {
          m_telemetry = telemetry;
     }
 
+    private static double kGoalVelocityMultiplier = 1.15; // TODO: tune this
+
     public double getGoalVelocity(double angle, double range){
         double tagX = kCameraX + Math.sqrt(range*range - Math.pow((kTagY - kCameraY), 2));
         double targetX = tagX + k_xOffset;
@@ -72,7 +74,7 @@ public class ShooterSubsystem extends SubsystemBase {
         double coeffC = kShooterWheelInertia * kShooterWheelOffset * kShooterWheelOffset + 0.5 * kArtifactMass * launchVelocity * launchVelocity;
 
         double angVelocity = (-kCoeffB - Math.sqrt(kCoeffB * kCoeffB - 4 * kCoeffA * coeffC)) / (2 * kCoeffA);
-        return (angVelocity * 60) / (2 * Math.PI);
+        return kGoalVelocityMultiplier * (angVelocity * 60) / (2 * Math.PI);
     }
 
     public void periodic() {
