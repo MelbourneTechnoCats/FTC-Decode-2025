@@ -3,8 +3,11 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.command.WaitCommand;
+import com.arcrobotics.ftclib.command.WaitUntilCommand;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
@@ -45,7 +48,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     HardwareMap.DeviceMapping<VoltageSensor> m_voltageSensors;
 
-
+    private SorterSubsystem m_sorterSubsystem;
 
     private static final double kTagY = 61.6/100; /** in m **/
 
@@ -73,7 +76,9 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double kCoeffA = kShooterWheelInertia * (kShooterWheelEfficiency * kShooterWheelEfficiency - 1);
     private static final double kCoeffB = kShooterWheelInertia * 2 * kShooterWheelEfficiency * kShooterWheelOffset;
 
-    public ShooterSubsystem(final HardwareMap hardwareMap, Telemetry telemetry){
+    private static final long kWaitTime = 400;
+
+    public ShooterSubsystem(final HardwareMap hardwareMap, SorterSubsystem sorterSubsystem, Telemetry telemetry){
          m_servo = new SimpleServo(hardwareMap, "shooterServo", MIN_ANGLE, MAX_ANGLE);
          m_leftMotor = new MotorEx(hardwareMap, "leftShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed );
          m_rightMotor = new MotorEx(hardwareMap, "rightShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed);
@@ -83,6 +88,7 @@ public class ShooterSubsystem extends SubsystemBase {
 //        m_motorGroup.setVeloCoefficients(kshooterP,kshooterI,kshooterD);
 //        m_motorGroup.setFeedforwardCoefficients(kshooterS, kshooterV, kshooterA);
          m_telemetry = telemetry;
+         m_sorterSubsystem = sorterSubsystem;
 
          m_pidController = new PIDController(kshooterP, kshooterI, kshooterD);
          m_ffController = new SimpleMotorFeedforward(kshooterS, kshooterV, kshooterA);
@@ -95,10 +101,9 @@ public class ShooterSubsystem extends SubsystemBase {
         double velocity = m_motorGroup.getVelocity(); // in ticks per second
         return velocity * 60 / kshooterEncoderResolution;
     }
-    public double getGoalVelocity(double angle, double range){
-        double tagX = kCameraX + Math.sqrt(range*range - Math.pow((kTagY - kCameraY), 2));
-        double targetX = tagX + k_xOffset;
-        double targetY = kTagY + k_yOffset;
+
+    public double getGoalVelocity(double targetX, double targetY, double angle) {
+        angle = Math.toRadians(angle);
 
         double shootingTime = Math.sqrt((2 / kGravity) * ((targetX * Math.tan(angle)) - targetY + kShooterHeight));
         double launchVelocity = targetX / (shootingTime * Math.cos(angle));
@@ -107,6 +112,31 @@ public class ShooterSubsystem extends SubsystemBase {
 
         double angVelocity = (-kCoeffB - Math.sqrt(kCoeffB * kCoeffB - 4 * kCoeffA * coeffC)) / (2 * kCoeffA);
         return kGoalVelocityMultiplier * (angVelocity * 60) / (2 * Math.PI);
+    }
+
+    public double getGoalVelocityFromRange(double angle, double range){
+        double tagX = kCameraX + Math.sqrt(range*range - Math.pow((kTagY - kCameraY), 2));
+        double targetX = tagX + k_xOffset;
+        double targetY = kTagY + k_yOffset;
+
+        return getGoalVelocity(targetX, targetY, angle);
+    }
+
+    public double getGoalVelocityFromDistance(double angle, double distance) {
+        double targetX = distance - DriveSubsystem.DEPTH / 2;
+        double targetY = kTagY + k_yOffset;
+        return getGoalVelocity(targetX, targetY, angle);
+    }
+
+    public Command shootCommand(SorterSubsystem.Colour colour, double distance, double angle) {
+        double velocity = getGoalVelocityFromDistance(angle, distance);
+
+        return new ParallelCommandGroup(
+                runCommand(angle, velocity),
+                new WaitUntilCommand(this::isVelocityReached)
+                        .andThen(m_sorterSubsystem.loadIntoShooterCommand(colour))
+                        .andThen(new WaitCommand(kWaitTime))
+        );
     }
 
     public void periodic() {
@@ -135,6 +165,12 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void setVelocity(double velocity) {
         m_targetVelocity = velocity;
+    }
+
+    private static final double VELOCITY_TOLERANCE = 120;
+
+    public boolean isVelocityReached() {
+        return Math.abs(getVelocity() - m_targetVelocity) < VELOCITY_TOLERANCE;
     }
 
     public void stop() {
