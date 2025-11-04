@@ -41,7 +41,9 @@ public class SorterSubsystem extends SubsystemBase {
     public Colour[] occupancy = new Colour[]{Colour.NONE, Colour.NONE, Colour.NONE};
 
 
-    private static final double WAIT_TIME = 200; // in ms
+    private static final double SORTER_WAIT_TIME = 400; // in ms
+    private static final double LEVER_WAIT_TIME = 300; // in ms
+    private static final double SENSOR_WAIT_TIME = 200; // in ms
     private NormalizedColorSensor m_colourSensor;
 
     private static float COLOUR_SENSOR_GAIN = 21;
@@ -93,7 +95,7 @@ public class SorterSubsystem extends SubsystemBase {
 
     public Command feedUnoccupiedCompartmentCommand() {
         return new InstantCommand(this::feedUnoccupiedCompartment, this)
-                .andThen(new WaitCommand((long) WAIT_TIME));
+                .andThen(new WaitCommand((long) SORTER_WAIT_TIME));
     }
 
     public void loadIntoShooter(int position) {
@@ -114,8 +116,10 @@ public class SorterSubsystem extends SubsystemBase {
         return new InstantCommand(() -> {
             loadIntoShooter(position);
         }, this)
-                .andThen(new WaitCommand((long) WAIT_TIME))
-                .andThen(new InstantCommand(() -> { setLeverAngle(false); }, this));
+                .andThen(new WaitCommand((long) SORTER_WAIT_TIME))
+                .andThen(new InstantCommand(() -> { setLeverAngle(false); }, this))
+                .andThen(new WaitCommand((long) LEVER_WAIT_TIME))
+                .andThen(new InstantCommand(() -> {setLeverAngle(true);}, this));
     }
 
 
@@ -123,8 +127,10 @@ public class SorterSubsystem extends SubsystemBase {
         return new InstantCommand(() -> {
             loadIntoShooter(colour);
         }, this)
-                .andThen(new WaitCommand((long) WAIT_TIME))
-                .andThen(new InstantCommand(() -> { setLeverAngle(false); }, this));
+                .andThen(new WaitCommand((long) SORTER_WAIT_TIME))
+                .andThen(new InstantCommand(() -> { setLeverAngle(false); }, this))
+                .andThen(new WaitCommand((long) LEVER_WAIT_TIME))
+                .andThen(new InstantCommand(() -> {setLeverAngle(true);}, this));
     }
 
     public Command getColourCommand(){
@@ -158,7 +164,7 @@ public class SorterSubsystem extends SubsystemBase {
                                             break;
                                     }
                                 }
-                        ).withTimeout((long) WAIT_TIME)
+                        ).withTimeout((long) SENSOR_WAIT_TIME)
                 )
                 .andThen(
                         new InstantCommand(() -> {
@@ -184,7 +190,7 @@ public class SorterSubsystem extends SubsystemBase {
         return new InstantCommand(() -> {
             setSorterAngle(position, toIntake);
         }, this)
-                .andThen(new WaitCommand((long) WAIT_TIME));
+                .andThen(new WaitCommand((long) SORTER_WAIT_TIME));
     }
     public void setLeverAngle(boolean retract)
     {
