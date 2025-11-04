@@ -1,20 +1,21 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.arcrobotics.ftclib.command.RunCommand;
-import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
+import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
+import org.firstinspires.ftc.teamcode.commands.ActionCommand;
 
 public class DriveSubsystem extends SubsystemBase {
     private Telemetry m_telemetry;
-    private MecanumDrive m_drive;
+    public final MecanumDrive m_drive;
 
     private double m_xSpeed = 0, m_ySpeed = 0, m_rotSpeed = 0;
     private boolean m_fieldCentric = false;
@@ -35,6 +36,11 @@ public class DriveSubsystem extends SubsystemBase {
                     setPose(m_vision.getLastPose());
                 })
         );
+    }
+
+    public ActionCommand action2Command(Action action)
+    {
+        return new ActionCommand(action, this);
     }
 
     @Override
