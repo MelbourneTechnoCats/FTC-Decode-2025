@@ -17,6 +17,9 @@ public class DriveSubsystem extends SubsystemBase {
     private Telemetry m_telemetry;
     public final MecanumDrive m_drive;
 
+    public static final double WIDTH = 18;
+    public static final double DEPTH = 18;
+
     private double m_xSpeed = 0, m_ySpeed = 0, m_rotSpeed = 0;
     private boolean m_fieldCentric = false;
 
