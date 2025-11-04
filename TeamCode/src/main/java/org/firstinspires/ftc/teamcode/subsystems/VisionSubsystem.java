@@ -44,6 +44,15 @@ public class VisionSubsystem extends SubsystemBase {
     }
     public final PoseTrigger m_poseTrigger = new PoseTrigger();
 
+    public enum Motif {
+        NONE,
+        GPP,
+        PGP,
+        PPG
+    }
+
+    private Motif m_motif = Motif.NONE;
+
     public VisionSubsystem(final HardwareMap hardwareMap, final Telemetry telemetry) {
         m_telemetry = telemetry;
 
@@ -86,6 +95,13 @@ public class VisionSubsystem extends SubsystemBase {
                 {
                     m_redTargetPose = detection.ftcPose;
                 }
+            } else if (m_motif == Motif.NONE) {
+                switch (detection.id) {
+                    case 21: m_motif = Motif.GPP; break;
+                    case 22: m_motif = Motif.PGP; break;
+                    case 23: m_motif = Motif.PPG; break;
+                    default: break;
+                }
             }
         }
 
@@ -122,5 +138,9 @@ public class VisionSubsystem extends SubsystemBase {
     public AprilTagPoseFtc getBlueTargetPose()
     {
         return m_blueTargetPose;
+    }
+
+    public Motif getMotif() {
+        return m_motif;
     }
 }
