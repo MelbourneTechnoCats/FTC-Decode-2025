@@ -34,11 +34,11 @@ public class SorterSubsystem extends SubsystemBase {
     static final double C1_LEVER_ANGLE = C2_LEVER_ANGLE + 120;
     static final double LEVER_RETRACT_ANGLE = 25;
     static final double LEVER_EXTEND_ANGLE = LEVER_RETRACT_ANGLE + 80;
-    private int currentCompartment = 0;
+    int currentCompartment = 0;
     private boolean toIntake = true;
     public Colour[] occupancy = new Colour[]{Colour.NONE, Colour.NONE, Colour.NONE};
 
-    private static final double SENSOR_WAIT_TIME = 200; // in ms
+    static final double SENSOR_WAIT_TIME = 200; // in ms
     private NormalizedColorSensor m_colourSensor;
 
     private static float COLOUR_SENSOR_GAIN = 21;
@@ -53,39 +53,6 @@ public class SorterSubsystem extends SubsystemBase {
         m_colourSensor = hardwareMap.get(NormalizedColorSensor.class, "sorterColour");
         m_colourSensor.setGain(COLOUR_SENSOR_GAIN);
         m_hardwareMap = hardwareMap;
-    }
-    public Command feedUnoccupiedCompartmentCommand() {
-        return new SelectCommand(() -> {
-            for (int i = 0; i < 3; i++) {
-                if (occupancy[i] == Colour.NONE) {
-                    return setSorterAngleCommand(i, true);
-                }
-            }
-            return new InstantCommand(() -> {}); // no-op
-        });
-    }
-
-    public Command loadIntoShooterCommand(int position) {
-        return setSorterAngleCommand(position, false)
-                .andThen(
-                        setLeverAngleCommand(false)
-                                .alongWith(new InstantCommand(() -> {
-                                    occupancy[position] = Colour.NONE;
-                                }))
-                )
-                .andThen(setLeverAngleCommand(true));
-    }
-
-
-    public Command loadIntoShooterCommand(Colour colour) {
-        return new SelectCommand(() -> {
-            for (int pos = 0; pos < 3; pos++) {
-                if (occupancy[pos] == colour) {
-                    return loadIntoShooterCommand(pos);
-                }
-            }
-            return new InstantCommand(() -> {}); // no-op
-        });
     }
 
     public Command getColourCommand(){
