@@ -16,7 +16,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private Telemetry _telemetry;
 
-    private final double BALL_DISTANCE = 10;
+    private final double BALL_DISTANCE = 17;
     private DistanceSensor _distSensor;
 
 
