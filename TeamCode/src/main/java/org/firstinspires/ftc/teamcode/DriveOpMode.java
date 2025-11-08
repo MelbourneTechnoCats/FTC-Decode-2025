@@ -4,6 +4,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
+import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -11,17 +12,19 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
-@TeleOp
-public class DriveOpMode extends CommandOpMode {
+//@TeleOp
+public abstract class DriveOpMode extends CommandOpMode {
     private GamepadEx m_driveGamepad;
     private DriveSubsystem m_driveSubsystem;
     private IntakeSubsystem m_intakeSubsystem;
     private SorterSubsystem m_sorterSubsystem;
     private VisionSubsystem m_visionSubsystem;
     private IntakeAndSorterSubsystem m_intakeAndSorter;
+    private ShooterSubsystem m_shooterSubsystem;
     private boolean m_fieldCentric = false;
     public static double squareInput(double input){
 
@@ -36,14 +39,15 @@ public class DriveOpMode extends CommandOpMode {
 //        return output;
         return Math.copySign(input*input, input);
     }
-    @Override
-    public void initialize() {
+
+    public void initialize(boolean blue) {
         m_driveGamepad = new GamepadEx(gamepad1);
         m_visionSubsystem = new VisionSubsystem(hardwareMap, telemetry);
         m_driveSubsystem = new DriveSubsystem(hardwareMap,new Pose2d(0,0,0), telemetry, m_visionSubsystem);
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);
         m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
         m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
+        m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
         m_driveSubsystem.setDefaultCommand(new RunCommand(
                 () -> {
                     double leftX = m_driveGamepad.getLeftX();
@@ -64,6 +68,9 @@ public class DriveOpMode extends CommandOpMode {
                     telemetry.addData("Robot X", pose.getX());
                     telemetry.addData("Robot Y", pose.getY());
                     telemetry.addData("Robot heading", Math.toDegrees(pose.getHeading()));
+
+                    telemetry.addData("Distance to Red Target", m_visionSubsystem.getRedTargetRange());
+                    telemetry.addData("Distance to Blue Target", m_visionSubsystem.getBlueTargetRange());
                 }, m_driveSubsystem
         ));
         m_sorterSubsystem.setDefaultCommand(new RunCommand(() -> {
@@ -84,9 +91,18 @@ public class DriveOpMode extends CommandOpMode {
                 .whileHeld(m_intakeAndSorter.intakeCommand());
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.B)
                 .whenHeld(m_intakeAndSorter.intakeCommand());
+
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.Y)
-                .whenPressed(m_intakeAndSorter.loadIntoShooterCommand(SorterSubsystem.Colour.GREEN));
+                .whenPressed(new SelectCommand(() -> {
+                    double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
+                    if (!Double.isNaN(range)) return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, range, 60); // TODO: adjust angle
+                    else return new InstantCommand(() -> {}); // no-op
+                }));
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.X)
-                .whenPressed(m_intakeAndSorter.loadIntoShooterCommand(SorterSubsystem.Colour.PURPLE));
+                .whenPressed(new SelectCommand(() -> {
+                    double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
+                    if (!Double.isNaN(range)) return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, range, 60); // TODO: adjust angle
+                    else return new InstantCommand(() -> {}); // no-op
+                }));
     }
 }
