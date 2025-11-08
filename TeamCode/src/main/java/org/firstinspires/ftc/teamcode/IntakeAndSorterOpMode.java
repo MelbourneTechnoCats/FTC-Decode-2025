@@ -7,11 +7,15 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 
 @TeleOp
-public class SorterOpMode extends CommandOpMode {
+public class IntakeAndSorterOpMode extends CommandOpMode {
+    private IntakeSubsystem m_intakeSubsystem;
     private SorterSubsystem m_sorterSubsystem;
+    private IntakeAndSorterSubsystem m_intakeAndSorter;
     private GamepadEx m_gamepad;
     private boolean m_toIntake = true;
     private boolean m_retract = true;
@@ -20,7 +24,9 @@ public class SorterOpMode extends CommandOpMode {
     @Override
     public void initialize() {
         m_gamepad = new GamepadEx(gamepad1);
+        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);
+        m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
         m_gamepad.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
                 .whenPressed(
                         new InstantCommand(() -> {
@@ -29,7 +35,7 @@ public class SorterOpMode extends CommandOpMode {
                             telemetry.addData("Position", m_position);
                             telemetry.update();
                         })
-                                .andThen(new SelectCommand(() -> m_sorterSubsystem.setSorterAngleCommand(m_position, m_toIntake)))
+                                .andThen(new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_position, m_toIntake)))
                 );
         m_gamepad.getGamepadButton(GamepadKeys.Button.B)
                 .whenPressed(
@@ -41,7 +47,7 @@ public class SorterOpMode extends CommandOpMode {
                             telemetry.addData("Position", m_position);
                             telemetry.update();
                         })
-                                .andThen(new SelectCommand(() -> m_sorterSubsystem.setSorterAngleCommand(m_position, m_toIntake)))
+                                .andThen(new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_position, m_toIntake)))
                 );
         m_gamepad.getGamepadButton(GamepadKeys.Button.X)
                 .whenPressed(

@@ -16,14 +16,12 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private Telemetry _telemetry;
 
-    private SorterSubsystem _sorter;
-    private final double BALL_DISTANCE = 10;
+    private final double BALL_DISTANCE = 17;
     private DistanceSensor _distSensor;
 
 
-    public IntakeSubsystem(final HardwareMap hardwareMap, SorterSubsystem sorterSubsystem, Telemetry telemetry) {
+    public IntakeSubsystem(final HardwareMap hardwareMap, Telemetry telemetry) {
         _motor = new MotorEx(hardwareMap,"intakeMotor");
-        _sorter = sorterSubsystem;
         _telemetry = telemetry;
         _distSensor = hardwareMap.get(DistanceSensor.class, "intakeSensor");
     }
@@ -46,16 +44,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public boolean isBallThere(){
         return _distSensor.getDistance(DistanceUnit.CM) < BALL_DISTANCE;
-
-    }
-    public Command intakeCommand(){
-        return _sorter.feedUnoccupiedCompartmentCommand()
-                .andThen(runCommand().interruptOn(this::isBallThere))
-                .andThen(_sorter.getColourCommand());
-    }
-
-
-    public void test(){
 
     }
 

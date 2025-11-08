@@ -9,6 +9,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
@@ -20,6 +21,7 @@ public class DriveOpMode extends CommandOpMode {
     private IntakeSubsystem m_intakeSubsystem;
     private SorterSubsystem m_sorterSubsystem;
     private VisionSubsystem m_visionSubsystem;
+    private IntakeAndSorterSubsystem m_intakeAndSorter;
     private boolean m_fieldCentric = false;
     public static double squareInput(double input){
 
@@ -40,7 +42,8 @@ public class DriveOpMode extends CommandOpMode {
         m_visionSubsystem = new VisionSubsystem(hardwareMap, telemetry);
         m_driveSubsystem = new DriveSubsystem(hardwareMap,new Pose2d(0,0,0), telemetry, m_visionSubsystem);
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);
-        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, m_sorterSubsystem, telemetry);
+        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
+        m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
         m_driveSubsystem.setDefaultCommand(new RunCommand(
                 () -> {
                     double leftX = m_driveGamepad.getLeftX();
@@ -78,12 +81,12 @@ public class DriveOpMode extends CommandOpMode {
                 ));
 
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whileHeld(m_intakeSubsystem.intakeCommand());
+                .whileHeld(m_intakeAndSorter.intakeCommand());
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenHeld(m_intakeSubsystem.intakeCommand());
+                .whenHeld(m_intakeAndSorter.intakeCommand());
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.Y)
-                .whenPressed(m_sorterSubsystem.loadIntoShooterCommand(SorterSubsystem.Colour.GREEN));
+                .whenPressed(m_intakeAndSorter.loadIntoShooterCommand(SorterSubsystem.Colour.GREEN));
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.X)
-                .whenPressed(m_sorterSubsystem.loadIntoShooterCommand(SorterSubsystem.Colour.PURPLE));
+                .whenPressed(m_intakeAndSorter.loadIntoShooterCommand(SorterSubsystem.Colour.PURPLE));
     }
 }
