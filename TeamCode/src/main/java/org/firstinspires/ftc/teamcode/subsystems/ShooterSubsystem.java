@@ -48,7 +48,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     HardwareMap.DeviceMapping<VoltageSensor> m_voltageSensors;
 
-    private SorterSubsystem m_sorterSubsystem;
+    private IntakeAndSorterSubsystem m_intakeAndSorter;
 
     private static final double kTagY = 61.6/100; /** in m **/
 
@@ -76,9 +76,9 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double kCoeffA = kShooterWheelInertia * (kShooterWheelEfficiency * kShooterWheelEfficiency - 1);
     private static final double kCoeffB = kShooterWheelInertia * 2 * kShooterWheelEfficiency * kShooterWheelOffset;
 
-    private static final long kWaitTime = 400;
+    private static final long kWaitTime = 100; // extra time to wait for the ball to be shot
 
-    public ShooterSubsystem(final HardwareMap hardwareMap, SorterSubsystem sorterSubsystem, Telemetry telemetry){
+    public ShooterSubsystem(final HardwareMap hardwareMap, IntakeAndSorterSubsystem intakeAndSorter, Telemetry telemetry){
          m_servo = new SimpleServo(hardwareMap, "shooterServo", MIN_ANGLE, MAX_ANGLE);
          m_leftMotor = new MotorEx(hardwareMap, "leftShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed );
          m_rightMotor = new MotorEx(hardwareMap, "rightShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed);
@@ -88,7 +88,7 @@ public class ShooterSubsystem extends SubsystemBase {
 //        m_motorGroup.setVeloCoefficients(kshooterP,kshooterI,kshooterD);
 //        m_motorGroup.setFeedforwardCoefficients(kshooterS, kshooterV, kshooterA);
          m_telemetry = telemetry;
-         m_sorterSubsystem = sorterSubsystem;
+        m_intakeAndSorter = intakeAndSorter;
 
          m_pidController = new PIDController(kshooterP, kshooterI, kshooterD);
          m_ffController = new SimpleMotorFeedforward(kshooterS, kshooterV, kshooterA);
@@ -131,12 +131,14 @@ public class ShooterSubsystem extends SubsystemBase {
     public Command shootCommand(SorterSubsystem.Colour colour, double distance, double angle) {
         double velocity = getGoalVelocityFromDistance(angle, distance);
 
-        return new ParallelCommandGroup(
-                runCommand(angle, velocity),
-                new WaitUntilCommand(this::isVelocityReached)
-                        .andThen(m_sorterSubsystem.loadIntoShooterCommand(colour))
-                        .andThen(new WaitCommand(kWaitTime))
-        );
+        return new InstantCommand(() -> {
+            setAngle(angle);
+            setVelocity(velocity);
+        }, this)
+                .andThen(new WaitUntilCommand(this::isVelocityReached))
+                .andThen(m_intakeAndSorter.loadIntoShooterCommand(colour))
+                .andThen(new WaitCommand(kWaitTime))
+                .whenFinished(() -> { setVelocity(0); });
     }
 
     public void periodic() {

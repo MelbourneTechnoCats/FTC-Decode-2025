@@ -10,6 +10,8 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 
@@ -19,6 +21,8 @@ public class ShooterOpMode extends CommandOpMode {
     private GamepadEx m_shootGamepad;
     private ShooterSubsystem m_shooterSubsystem;
     private SorterSubsystem m_sorterSubsystem;
+    private IntakeSubsystem m_intakeSubsystem;
+    private IntakeAndSorterSubsystem m_intakeAndSorter;
 
     public static double m_velocity = 1800;
 
@@ -28,7 +32,9 @@ public class ShooterOpMode extends CommandOpMode {
 
         m_shootGamepad = new GamepadEx(gamepad1);
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);
-        m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_sorterSubsystem, telemetry);
+        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
+        m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
+        m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
 
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
                 .whileHeld(new RunCommand(() -> {

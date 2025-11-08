@@ -13,6 +13,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
@@ -26,6 +27,7 @@ public class BlueFarAutoOpMode extends CommandOpMode {
     private DriveSubsystem m_driveSubsystem;
     private SorterSubsystem m_sorterSubsystem;
     private IntakeSubsystem m_intakeSubsystem;
+    private IntakeAndSorterSubsystem m_intakeAndSorter;
     private ShooterSubsystem m_shooterSubsystem;
 
     private static final double CORNER_X = -48.303871;
@@ -68,7 +70,7 @@ public class BlueFarAutoOpMode extends CommandOpMode {
                         .strafeTo(new Vector2d(spikeX, SPIKE_START_Y))
                         .build()
         ).andThen(
-                m_intakeSubsystem.intakeCommand()
+                m_intakeAndSorter.intakeCommand()
                         .perpetually()
                         .raceWith(
                                 m_driveSubsystem.action2Command(
@@ -94,8 +96,9 @@ public class BlueFarAutoOpMode extends CommandOpMode {
         Pose2d initialPose = new Pose2d(INITIAL_X, INITIAL_Y, INITIAL_HEADING);
         m_driveSubsystem = new DriveSubsystem(hardwareMap, initialPose, telemetry, m_visionSubsystem);
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);
-        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, m_sorterSubsystem, telemetry);
-        m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_sorterSubsystem, telemetry);
+        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
+        m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
+        m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
 
         Command shootPurpleCommand = m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, SHOOT_DISTANCE, SHOOT_ANGLE);
         Command shootGreenCommand = m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, SHOOT_DISTANCE, SHOOT_ANGLE);
