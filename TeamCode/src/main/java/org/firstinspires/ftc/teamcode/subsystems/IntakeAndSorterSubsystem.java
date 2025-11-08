@@ -19,8 +19,9 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
     }
 
     public Command setSorterAngleCommand(int position, boolean toIntake) { // this wrapper turns the intake to hold the balls in place while turning the sorter
-        return m_sorter.setSorterAngleCommand(position, toIntake)
-                .alongWith(m_intake.runCommand());
+        return new InstantCommand(m_intake::runMotor, m_intake)
+                .andThen(m_sorter.setSorterAngleCommand(position, toIntake))
+                .whenFinished(m_intake::stopMotor);
     }
 
     public Command getColourCommand(){ // uses the above setSorterAngleCommand
