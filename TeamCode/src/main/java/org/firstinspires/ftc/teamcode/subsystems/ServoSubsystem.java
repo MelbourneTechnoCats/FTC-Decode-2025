@@ -52,6 +52,7 @@ public class ServoSubsystem extends SubsystemBase {
         m_servo.turnToAngle(angle, unit);
 
         if (unit == AngleUnit.RADIANS) m_targetPosition = Math.toDegrees(angle);
+        else m_targetPosition = angle;
         if (Double.isNaN(m_currentPosition)) m_currentPosition = m_targetPosition; // assume that the servo is at the target already
 
         long time = (long) Math.ceil(Math.abs(m_currentPosition - m_targetPosition) / m_speed); // round up waiting time
