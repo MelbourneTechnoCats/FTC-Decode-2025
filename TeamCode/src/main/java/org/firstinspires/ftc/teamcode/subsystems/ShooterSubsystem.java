@@ -14,6 +14,7 @@ import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -26,7 +27,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private final MotorEx m_leftMotor;
     private final MotorEx m_rightMotor;
     private final MotorGroup m_motorGroup;
-    private final SimpleServo m_servo;
+    private final ServoSubsystem m_servo;
 
  public static double kshooterP = 0.004;
  public static double kshooterI = 0;
@@ -78,8 +79,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private static final long kWaitTime = 100; // extra time to wait for the ball to be shot
 
+    private static double kServoSpeed = 50; // GoBilda Dual Mode Torque servo no-load speed @ 6.0V
+
     public ShooterSubsystem(final HardwareMap hardwareMap, IntakeAndSorterSubsystem intakeAndSorter, Telemetry telemetry){
-         m_servo = new SimpleServo(hardwareMap, "shooterServo", MIN_ANGLE, MAX_ANGLE);
+         m_servo = new ServoSubsystem(hardwareMap, "shooterServo", kServoSpeed, MIN_ANGLE, MAX_ANGLE);
          m_leftMotor = new MotorEx(hardwareMap, "leftShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed );
          m_rightMotor = new MotorEx(hardwareMap, "rightShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed);
          m_rightMotor.setInverted(true);
@@ -132,9 +135,9 @@ public class ShooterSubsystem extends SubsystemBase {
         double velocity = getGoalVelocityFromDistance(angle, distance);
 
         return new InstantCommand(() -> {
-            setAngle(angle);
             setVelocity(velocity);
         }, this)
+                .alongWith(setAngleCommand(angle))
                 .andThen(new WaitUntilCommand(this::isVelocityReached))
                 .andThen(m_intakeAndSorter.loadIntoShooterCommand(colour))
                 .andThen(new WaitCommand(kWaitTime))
@@ -179,19 +182,17 @@ public class ShooterSubsystem extends SubsystemBase {
         m_targetVelocity = 0;
     }
 
-    public void setAngle(double angle){
-        m_servo.turnToAngle(angle);
-    }
-    public void turnByAngle(double angle){
-        m_servo.rotateByAngle(angle);
+    public Command setAngleCommand(double angle) {
+        return m_servo.setAngleCommand(angle);
     }
 
     public Command runCommand(double angle, double velocity)
     {
-        return new RunCommand(() -> {
-            setAngle(angle);
+        return new InstantCommand(() -> {
             setVelocity(velocity);
-        }, this).whenFinished(this::stop);
+        }, this)
+                .alongWith(setAngleCommand(angle))
+                .whenFinished(this::stop);
     }
 
     public Command stopCommand()
