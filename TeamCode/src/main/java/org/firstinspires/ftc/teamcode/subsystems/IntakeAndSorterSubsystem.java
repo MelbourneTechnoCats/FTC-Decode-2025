@@ -5,6 +5,7 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.command.WaitUntilCommand;
 
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -87,8 +88,11 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
             for (int i = 0; i < 3; i++) {
                 if (m_sorter.occupancy[i] == SorterSubsystem.Colour.NONE) {
                     return setSorterAngleCommand(i, true) // find unoccupied sorter compartment
-                            .andThen(m_intake.runCommand().interruptOn(m_intake::isBallThere)) // load ball in
-                            .andThen(getColourCommand()); // finally update occupancy
+                            .andThen(new InstantCommand(m_intake::runMotor, m_intake))
+                            .andThen(new WaitUntilCommand(m_intake::isBallThere))  // load ball in
+//                            .andThen(new InstantCommand(m_intake::stopMotor, m_intake))
+                            .andThen(getColourCommand()) // finally update occupancy
+                            .whenFinished(m_intake::stopMotor);
                 }
             }
             return new InstantCommand(() -> {}); // no-op

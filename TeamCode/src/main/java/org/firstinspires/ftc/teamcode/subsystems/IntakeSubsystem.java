@@ -16,7 +16,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private Telemetry _telemetry;
 
-    private final double BALL_DISTANCE = 17;
+    private final double BALL_DISTANCE = 20;
     private DistanceSensor _distSensor;
 
 
@@ -42,8 +42,12 @@ public class IntakeSubsystem extends SubsystemBase {
         );
     }
 
+    public double getSensorDistance() {
+        return _distSensor.getDistance(DistanceUnit.CM);
+    }
+
     public boolean isBallThere(){
-        return _distSensor.getDistance(DistanceUnit.CM) < BALL_DISTANCE;
+        return getSensorDistance() < BALL_DISTANCE;
 
     }
 

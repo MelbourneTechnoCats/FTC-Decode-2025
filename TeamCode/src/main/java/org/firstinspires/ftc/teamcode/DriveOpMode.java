@@ -71,6 +71,8 @@ public abstract class DriveOpMode extends CommandOpMode {
 
                     telemetry.addData("Distance to Red Target", m_visionSubsystem.getRedTargetRange());
                     telemetry.addData("Distance to Blue Target", m_visionSubsystem.getBlueTargetRange());
+
+                    telemetry.addData("Intake distance sensor distance (cm)", m_intakeSubsystem.getSensorDistance());
                 }, m_driveSubsystem
         ));
         m_sorterSubsystem.setDefaultCommand(new RunCommand(() -> {
@@ -104,5 +106,9 @@ public abstract class DriveOpMode extends CommandOpMode {
                     if (!Double.isNaN(range)) return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, range, 60); // TODO: adjust angle
                     else return new InstantCommand(() -> {}); // no-op
                 }));
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+                .whenPressed(m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, 64, 60));
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+                .whenPressed(m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, 64, 60));
     }
 }
