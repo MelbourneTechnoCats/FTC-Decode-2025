@@ -94,7 +94,7 @@ public class BlueFarAutoOpMode extends CommandOpMode {
     public void initialize() {
         m_visionSubsystem = new VisionSubsystem(hardwareMap, telemetry);
         Pose2d initialPose = new Pose2d(INITIAL_X, INITIAL_Y, INITIAL_HEADING);
-        m_driveSubsystem = new DriveSubsystem(hardwareMap, initialPose, telemetry, m_visionSubsystem);
+        m_driveSubsystem = new DriveSubsystem(hardwareMap, initialPose, telemetry);
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);
         m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
         m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
