@@ -5,6 +5,7 @@ import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.RunCommand;
+import com.arcrobotics.ftclib.command.StartEndCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.command.WaitUntilCommand;
@@ -20,6 +21,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup;
 
 @Config
 public class ShooterSubsystem extends SubsystemBase {
@@ -137,14 +139,14 @@ public class ShooterSubsystem extends SubsystemBase {
     public Command shootCommand(SorterSubsystem.Colour colour, double distance, double angle) {
         double velocity = getGoalVelocityFromDistance(angle, distance);
 
-        return new InstantCommand(() -> {
-            setVelocity(velocity);
-        }, this)
-                .alongWith(setAngleCommand(angle))
-                .andThen(new WaitUntilCommand(this::isVelocityReached))
-                .andThen(m_intakeAndSorter.loadIntoShooterCommand(colour))
-                .andThen(new WaitCommand(kWaitTime))
-                .whenFinished(() -> { setVelocity(0); });
+        return runCommand(angle, velocity)
+                .raceWith(
+                        new SequentialCommandGroup(
+                                new WaitUntilCommand(this::isVelocityReached),
+                                m_intakeAndSorter.loadIntoShooterCommand(colour),
+                                new WaitCommand(kWaitTime)
+                        )
+                );
     }
 
     public void periodic() {
@@ -192,11 +194,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public Command runCommand(double angle, double velocity)
     {
-        return new RunCommand(() -> {
-            setVelocity(velocity);
-        }, this)
-                .alongWith(setAngleCommand(angle))
-                .whenFinished(this::stop);
+        return new StartEndCommand(() -> { setVelocity(velocity); }, this::stop,this)
+                .alongWith(setAngleCommand(angle));
     }
 
     public Command stopCommand()
