@@ -69,8 +69,8 @@ public abstract class DriveOpMode extends CommandOpMode {
                     telemetry.addData("Robot Y", pose.getY());
                     telemetry.addData("Robot heading", Math.toDegrees(pose.getHeading()));
 
-                    telemetry.addData("Distance to Red Target", m_visionSubsystem.getRedTargetRange());
-                    telemetry.addData("Distance to Blue Target", m_visionSubsystem.getBlueTargetRange());
+                    telemetry.addData("Distance to Red Target (m)", m_visionSubsystem.getRedTargetRange());
+                    telemetry.addData("Distance to Blue Target (m)", m_visionSubsystem.getBlueTargetRange());
 
                     telemetry.addData("Intake distance sensor distance (cm)", m_intakeSubsystem.getSensorDistance());
                 }, m_driveSubsystem

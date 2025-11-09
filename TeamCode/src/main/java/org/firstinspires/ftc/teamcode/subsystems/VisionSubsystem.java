@@ -136,11 +136,11 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     public double getRedTargetRange() {
-        return (m_redTargetPose != null) ? m_redTargetPose.range : Double.NaN;
+        return (m_redTargetPose != null) ? (m_redTargetPose.range * 0.0254) : Double.NaN;
     }
 
     public double getBlueTargetRange() {
-        return (m_blueTargetPose != null) ? m_blueTargetPose.range : Double.NaN;
+        return (m_blueTargetPose != null) ? (m_blueTargetPose.range * 0.0254) : Double.NaN;
     }
 
     public AprilTagPoseFtc getBlueTargetPose()
