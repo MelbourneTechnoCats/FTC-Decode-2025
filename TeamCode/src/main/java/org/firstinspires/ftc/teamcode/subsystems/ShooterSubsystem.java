@@ -81,6 +81,9 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private static double kServoSpeed = 50; // GoBilda Dual Mode Torque servo no-load speed @ 6.0V
 
+    private static final double kServoPerpAngle = MAX_ANGLE; // servo position where the shooter is pointing 90 deg upwards
+    private static final double kServoGearRatio = (double) 100 / 15;
+
     public ShooterSubsystem(final HardwareMap hardwareMap, IntakeAndSorterSubsystem intakeAndSorter, Telemetry telemetry){
          m_servo = new ServoSubsystem(hardwareMap, "shooterServo", kServoSpeed, MIN_ANGLE, MAX_ANGLE);
          m_leftMotor = new MotorEx(hardwareMap, "leftShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed );
@@ -183,7 +186,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public Command setAngleCommand(double angle) {
-        return m_servo.setAngleCommand(angle);
+        return m_servo.setAngleCommand(kServoPerpAngle - (90 - angle) * kServoGearRatio); // TODO: verify direction
     }
 
     public Command runCommand(double angle, double velocity)
