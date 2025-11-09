@@ -3,19 +3,15 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
-import com.arcrobotics.ftclib.command.ParallelCommandGroup;
-import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.StartEndCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.command.WaitUntilCommand;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
-import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -79,11 +75,12 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double kCoeffA = kShooterWheelInertia * (kShooterWheelEfficiency * kShooterWheelEfficiency - 1);
     private static final double kCoeffB = kShooterWheelInertia * 2 * kShooterWheelEfficiency * kShooterWheelOffset;
 
-    private static final long kWaitTime = 100; // extra time to wait for the ball to be shot
+    private static final long kRampWaitTime = 100; // extra time to wait for motor to ramp up
+    private static final long kLoadWaitTime = 100; // extra time to wait for the ball to be shot
 
     private static double kServoSpeed = 50; // GoBilda Dual Mode Torque servo no-load speed @ 6.0V
 
-    private static final double kServoPerpAngle = MAX_ANGLE; // servo position where the shooter is pointing 90 deg upwards
+    private static final double kServoPerpAngle = 270; // servo position where the shooter is pointing 90 deg upwards
     private static final double kServoGearRatio = (double) 100 / 15;
 
     public ShooterSubsystem(final HardwareMap hardwareMap, IntakeAndSorterSubsystem intakeAndSorter, Telemetry telemetry){
@@ -131,7 +128,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public double getGoalVelocityFromDistance(double angle, double distance) {
-        double targetX = distance - DriveSubsystem.DEPTH / 2;
+        double targetX = distance - (DriveSubsystem.DEPTH * 0.0254) / 2;
         double targetY = kTagY + k_yOffset;
         return getGoalVelocity(targetX, targetY, angle);
     }
@@ -143,8 +140,9 @@ public class ShooterSubsystem extends SubsystemBase {
                 .raceWith(
                         new SequentialCommandGroup(
                                 new WaitUntilCommand(this::isVelocityReached),
+                                new WaitCommand(kRampWaitTime),
                                 m_intakeAndSorter.loadIntoShooterCommand(colour),
-                                new WaitCommand(kWaitTime)
+                                new WaitCommand(kLoadWaitTime)
                         )
                 );
     }
