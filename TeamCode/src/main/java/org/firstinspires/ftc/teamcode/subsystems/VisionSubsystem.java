@@ -53,6 +53,8 @@ public class VisionSubsystem extends SubsystemBase {
 
     private Motif m_motif = Motif.NONE;
 
+    private static final int kTagDecimation = 1;
+
     public VisionSubsystem(final HardwareMap hardwareMap, final Telemetry telemetry) {
         m_telemetry = telemetry;
 
@@ -60,6 +62,7 @@ public class VisionSubsystem extends SubsystemBase {
         m_tagProcessor = new AprilTagProcessor.Builder()
                 .setCameraPose(kCameraPosition, kCameraOrientation)
                 .build();
+        m_tagProcessor.setDecimation(kTagDecimation);
 
         m_visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
