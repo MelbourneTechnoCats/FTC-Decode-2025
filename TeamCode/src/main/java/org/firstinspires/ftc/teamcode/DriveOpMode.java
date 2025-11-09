@@ -107,8 +107,9 @@ public abstract class DriveOpMode extends CommandOpMode {
                     else return new InstantCommand(() -> {}); // no-op
                 }));
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                .whenPressed(m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, 64, 60));
+                .whenPressed(m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, 5, 60));
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-                .whenPressed(m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, 64, 60));
+                .whenPressed(m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, 5, 60));
+        // NOTE: distance is in metres
     }
 }
