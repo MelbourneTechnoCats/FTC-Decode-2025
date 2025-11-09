@@ -6,6 +6,7 @@ import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SelectCommand;
+import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup; // patched SequentialCommandGroup
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
@@ -109,8 +110,9 @@ public class SorterSubsystem extends SubsystemBase {
                 ));
     }
     public Command setSorterAngleCommand(int position, boolean toIntake){
-        return setLeverAngleCommand(true) // TODO: maybe we want to start moving before it pops all the way down?
-                .andThen(new SelectCommand(() -> {
+        return new SequentialCommandGroup(
+                setLeverAngleCommand(true), // TODO: maybe we want to start moving before it pops all the way down?
+                new SelectCommand(() -> {
                     /*
                         position:
                           0 - Compartment 1
@@ -128,11 +130,12 @@ public class SorterSubsystem extends SubsystemBase {
                         default:
                             return new InstantCommand(() -> {}); // no-op
                     }
-                }))
-                .andThen(new InstantCommand(() -> {
+                }),
+                new InstantCommand(() -> {
                     currentCompartment = position;
                     this.toIntake = toIntake;
-                }));
+                })
+        );
     }
 
     public Command setLeverAngleCommand(boolean retract)
