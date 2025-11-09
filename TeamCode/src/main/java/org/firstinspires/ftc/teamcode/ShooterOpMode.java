@@ -28,7 +28,7 @@ public class ShooterOpMode extends CommandOpMode {
 
     @Override
     public void initialize() {
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+//        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         m_shootGamepad = new GamepadEx(gamepad1);
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);

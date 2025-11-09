@@ -156,12 +156,13 @@ public class ShooterSubsystem extends SubsystemBase {
         double voltage = getBatteryVoltage();
         m_telemetry.addData("Battery voltage", voltage);
 //
-        m_telemetry.addData("Actual velocity", velocity);
-        m_telemetry.addData("Target velocity", m_targetVelocity);
+        m_telemetry.addLine("Shooter: ")
+                .addData("target", m_targetVelocity)
+                .addData("actual", velocity);
 ////        m_telemetry.addData("Position", position);
 //        m_telemetry.addData("Revolutions", revolutions);
 //        m_telemetry.addData("Distance", distance);
-        m_telemetry.update();
+//        m_telemetry.update();
 
         m_pidController.setPID(kshooterP,kshooterI,kshooterD);
         m_ffController = new SimpleMotorFeedforward(kshooterS, kshooterV, kshooterA);
@@ -191,7 +192,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public Command runCommand(double angle, double velocity)
     {
-        return new InstantCommand(() -> {
+        return new RunCommand(() -> {
             setVelocity(velocity);
         }, this)
                 .alongWith(setAngleCommand(angle))
