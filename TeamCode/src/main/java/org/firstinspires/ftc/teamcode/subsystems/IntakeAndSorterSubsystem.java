@@ -32,7 +32,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                     put(1, setSorterAngleCommand(0, false));
                     put(2, setSorterAngleCommand(1, false));
                 }},
-                () -> m_sorter.currentCompartment
+                m_sorter::getCurrentCompartment
         )
                 .andThen(new InstantCommand(() -> {
                     numPurple.set(0);
@@ -53,12 +53,12 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                                             break;
                                     }
                                 }, m_sorter
-                        ).withTimeout((long) m_sorter.SENSOR_WAIT_TIME)
+                        ).withTimeout((long) SorterSubsystem.SENSOR_WAIT_TIME)
                 )
                 .andThen(
                         new InstantCommand(() -> {
                             int readingCompartment = 0;
-                            switch (m_sorter.currentCompartment) {
+                            switch (m_sorter.getCurrentCompartment()) {
                                 case 0:
                                     readingCompartment = 1;
                                     break;

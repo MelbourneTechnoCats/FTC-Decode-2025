@@ -35,7 +35,7 @@ public class SorterSubsystem extends SubsystemBase {
     static final double C1_LEVER_ANGLE = C2_LEVER_ANGLE + 120;
     static final double LEVER_RETRACT_ANGLE = 40;
     static final double LEVER_EXTEND_ANGLE = LEVER_RETRACT_ANGLE + 80;
-    int currentCompartment = 0;
+    private int currentCompartment = 0;
     private boolean toIntake = true;
     public Colour[] occupancy = new Colour[]{Colour.NONE, Colour.NONE, Colour.NONE};
 
@@ -168,5 +168,13 @@ public class SorterSubsystem extends SubsystemBase {
         if (hue >= kMinGreenHue && hue <= kMaxGreenHue) return Colour.GREEN;
         else if (hue >= kMinPurpleHue && hue <= kMaxPurpleHue) return Colour.PURPLE;
         else return Colour.NONE;
+    }
+
+    public int getCurrentCompartment() {
+        return currentCompartment;
+    }
+
+    public boolean getIntakePosition() {
+        return toIntake;
     }
 }
