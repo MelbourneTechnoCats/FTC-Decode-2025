@@ -77,7 +77,7 @@ public class SorterSubsystem extends SubsystemBase {
         }));
     }
 
-    public Command getColourCommand(){
+    public Command getColourCommand(int compartment) {
         AtomicInteger numPurple = new AtomicInteger();
         AtomicInteger numGreen = new AtomicInteger();
         return new SelectCommand(
@@ -87,7 +87,7 @@ public class SorterSubsystem extends SubsystemBase {
                     put(2, setSorterAngleCommand(1, false));
 
 
-                }}, () -> {return currentCompartment;}
+                }}, () -> compartment
         )
                 .andThen(new InstantCommand(() -> {
                     numPurple.set(0);
@@ -112,18 +112,11 @@ public class SorterSubsystem extends SubsystemBase {
                 )
                 .andThen(
                         new InstantCommand(() -> {
-                            int readingCompartment =0;
-                            switch (currentCompartment){
-                                case 0: readingCompartment = 1; break;
-                                case 1: readingCompartment = 2; break;
-                                case 2: readingCompartment = 0; break;
-                                default: break;
-                            }
                             if (numGreen.get() > numPurple.get()){
-                                occupancy[readingCompartment] = Colour.GREEN;
+                                occupancy[compartment] = Colour.GREEN;
                             }
                             if (numPurple.get() > numGreen.get()){
-                                occupancy[readingCompartment] = Colour.PURPLE;
+                                occupancy[compartment] = Colour.PURPLE;
                             }
                         }
 

@@ -23,7 +23,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                 .raceWith(m_sorter.setSorterAngleCommand(position, toIntake));
     }
 
-    public Command getColourCommand(){ // uses the above setSorterAngleCommand
+    public Command getColourCommand(int compartment) { // uses the above setSorterAngleCommand
         AtomicInteger numPurple = new AtomicInteger();
         AtomicInteger numGreen = new AtomicInteger();
         return new SelectCommand(
@@ -32,7 +32,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                     put(1, setSorterAngleCommand(0, false));
                     put(2, setSorterAngleCommand(1, false));
                 }},
-                m_sorter::getCurrentCompartment
+                () -> compartment
         )
                 .andThen(new InstantCommand(() -> {
                     numPurple.set(0);
@@ -57,25 +57,11 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                 )
                 .andThen(
                         new InstantCommand(() -> {
-                            int readingCompartment = 0;
-                            switch (m_sorter.getCurrentCompartment()) {
-                                case 0:
-                                    readingCompartment = 1;
-                                    break;
-                                case 1:
-                                    readingCompartment = 2;
-                                    break;
-                                case 2:
-                                    readingCompartment = 0;
-                                    break;
-                                default:
-                                    break;
-                            }
                             if (numGreen.get() > numPurple.get()) {
-                                m_sorter.occupancy[readingCompartment] = SorterSubsystem.Colour.GREEN;
+                                m_sorter.occupancy[compartment] = SorterSubsystem.Colour.GREEN;
                             }
                             if (numPurple.get() > numGreen.get()) {
-                                m_sorter.occupancy[readingCompartment] = SorterSubsystem.Colour.PURPLE;
+                                m_sorter.occupancy[compartment] = SorterSubsystem.Colour.PURPLE;
                             }
                         }, m_sorter)
                 );
@@ -85,9 +71,10 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
         return new SelectCommand(() -> {
             for (int i = 0; i < 3; i++) {
                 if (m_sorter.occupancy[i] == SorterSubsystem.Colour.NONE) {
-                    return setSorterAngleCommand(i, true) // find unoccupied sorter compartment
+                    int compartment = i; // to keep Java happy
+                    return setSorterAngleCommand(compartment, true) // find unoccupied sorter compartment
                             .andThen(m_intake.runCommand().interruptOn(m_intake::isBallThere)) // load ball in
-                            .andThen(getColourCommand()); // finally update occupancy
+                            .andThen(new SelectCommand(() -> getColourCommand(compartment))); // finally update occupancy
                 }
             }
             return new InstantCommand(() -> {}); // no-op
