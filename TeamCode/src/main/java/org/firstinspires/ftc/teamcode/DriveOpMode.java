@@ -82,6 +82,8 @@ public abstract class DriveOpMode extends CommandOpMode {
                             .addData("0", m_sorterSubsystem.occupancy[0])
                             .addData("1", m_sorterSubsystem.occupancy[1])
                             .addData("2", m_sorterSubsystem.occupancy[2]);
+
+                    telemetry.addData("Goal velocity multiplier", m_shooterSubsystem.getGoalVelocityMultiplier());
                 }, m_driveSubsystem
         ));
 
@@ -97,6 +99,13 @@ public abstract class DriveOpMode extends CommandOpMode {
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.B)
                 .whenHeld(m_intakeAndSorter.intakeCommand());
 
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
+                .whenPressed(m_intakeAndSorter.getAllColoursCommand());
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(new InstantCommand(() -> { m_shooterSubsystem.setGoalVelocityMultiplier(m_shooterSubsystem.getGoalVelocityMultiplier() + 0.05); }));
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(new InstantCommand(() -> { m_shooterSubsystem.setGoalVelocityMultiplier(m_shooterSubsystem.getGoalVelocityMultiplier() - 0.05); }));
+
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(new SelectCommand(() -> {
                     double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
@@ -109,8 +118,6 @@ public abstract class DriveOpMode extends CommandOpMode {
                     if (!Double.isNaN(range)) return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, range, 60); // TODO: adjust angle
                     else return new InstantCommand(() -> {}); // no-op
                 }));
-        m_driveGamepad.getGamepadButton(GamepadKeys.Button.A)
-                        .whenPressed(m_intakeAndSorter.getAllColoursCommand());
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, 5, 60));
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)

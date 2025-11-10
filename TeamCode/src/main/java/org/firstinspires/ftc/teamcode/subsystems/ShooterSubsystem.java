@@ -100,7 +100,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         m_voltageSensors = hardwareMap.voltageSensor;
     }
-    private static final double kGoalVelocityMultiplier = 1.15; // TODO: tune this
+    private double m_goalVelocityMultiplier = 1.15; // TODO: tune this
 
     public double getVelocity() { // get velocity in rpm
         double velocity = m_motorGroup.getVelocity(); // in ticks per second
@@ -116,7 +116,7 @@ public class ShooterSubsystem extends SubsystemBase {
         double coeffC = kShooterWheelInertia * kShooterWheelOffset * kShooterWheelOffset + 0.5 * kArtifactMass * launchVelocity * launchVelocity;
 
         double angVelocity = (-kCoeffB - Math.sqrt(kCoeffB * kCoeffB - 4 * kCoeffA * coeffC)) / (2 * kCoeffA);
-        return kGoalVelocityMultiplier * (angVelocity * 60) / (2 * Math.PI);
+        return m_goalVelocityMultiplier * (angVelocity * 60) / (2 * Math.PI);
     }
 
     public double getGoalVelocityFromRange(double angle, double range){
@@ -213,5 +213,13 @@ public class ShooterSubsystem extends SubsystemBase {
             }
         }
         return result;
+    }
+
+    public double getGoalVelocityMultiplier() {
+        return m_goalVelocityMultiplier;
+    }
+
+    public void setGoalVelocityMultiplier(double value) {
+        m_goalVelocityMultiplier = value;
     }
 }
