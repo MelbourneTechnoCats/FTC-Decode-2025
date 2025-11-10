@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
@@ -17,6 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
 //@TeleOp
+@Config
 public abstract class DriveOpMode extends CommandOpMode {
     private GamepadEx m_driveGamepad;
     private DriveSubsystem m_driveSubsystem;
@@ -39,6 +41,8 @@ public abstract class DriveOpMode extends CommandOpMode {
 //        return output;
         return Math.copySign(input*input, input);
     }
+
+    public static double m_shootVelocity = 3000;
 
     public void initialize(boolean blue) {
         m_driveGamepad = new GamepadEx(gamepad1);
@@ -111,5 +115,11 @@ public abstract class DriveOpMode extends CommandOpMode {
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
                 .whenPressed(m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, 5, 60));
         // NOTE: distance is in metres
+
+        /* for testing */
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.GREEN, m_shootVelocity, 60)));
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.GREEN, m_shootVelocity, 60)));
     }
 }

@@ -135,7 +135,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public Command shootCommand(SorterSubsystem.Colour colour, double distance, double angle) {
         double velocity = getGoalVelocityFromDistance(angle, distance);
+        return shootCommandWithVelocity(colour, velocity, angle);
+    }
 
+    public Command shootCommandWithVelocity(SorterSubsystem.Colour colour, double velocity, double angle) {
         return runCommand(angle, velocity)
                 .raceWith(
                         new SequentialCommandGroup(
