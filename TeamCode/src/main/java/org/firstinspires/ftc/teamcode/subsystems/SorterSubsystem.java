@@ -6,12 +6,15 @@ import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SelectCommand;
+
+import org.firstinspires.ftc.teamcode.ArrayIndexComparator;
 import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup; // patched SequentialCommandGroup
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,6 +50,15 @@ public class SorterSubsystem extends SubsystemBase {
     private static double LEVER_SERVO_SPEED = 115; // GoBilda Dual Mode Speed servo no-load speed @ 6.0V
     private static double SORTER_SERVO_SPEED = 50; // GoBilda Dual Mode Torque servo no-load speed @ 6.0V
     // NOTE: both servos are now powered by the REV Servo Hub
+
+    static final Double[] INTAKE_ANGLES = new Double[]{C0_INTAKE_ANGLE, C1_INTAKE_ANGLE, C2_INTAKE_ANGLE};
+    static final Integer[] INTAKE_ANGLE_ORDER = new ArrayIndexComparator<>(INTAKE_ANGLES).getSortedIndices();
+
+    static final Double[] LEVER_ANGLES = new Double[]{C0_LEVER_ANGLE, C1_LEVER_ANGLE, C2_LEVER_ANGLE};
+    static final Integer[] LEVER_ANGLE_ORDER = new ArrayIndexComparator<>(LEVER_ANGLES).getSortedIndices();
+
+    static final Double[] READ_COLOUR_ANGLES = new Double[]{C2_LEVER_ANGLE, C0_LEVER_ANGLE, C1_LEVER_ANGLE};
+    static final Integer[] READ_COLOUR_ANGLE_ORDER = new ArrayIndexComparator<>(LEVER_ANGLES).getSortedIndices();
 
     public SorterSubsystem(HardwareMap hardwareMap) {
         m_leverServo = new ServoSubsystem(hardwareMap, "leverServo", LEVER_SERVO_SPEED, MIN_ANGLE, MAX_ANGLE);
@@ -115,9 +127,10 @@ public class SorterSubsystem extends SubsystemBase {
                             if (numGreen.get() > numPurple.get()){
                                 occupancy[compartment] = Colour.GREEN;
                             }
-                            if (numPurple.get() > numGreen.get()){
+                            else if (numPurple.get() > numGreen.get()){
                                 occupancy[compartment] = Colour.PURPLE;
                             }
+                            else occupancy[compartment] = Colour.NONE;
                         }
 
 
@@ -190,5 +203,9 @@ public class SorterSubsystem extends SubsystemBase {
 
     public boolean getIntakePosition() {
         return toIntake;
+    }
+
+    public double getSorterServoPosition() {
+        return m_sorterServo.getCurrentPosition();
     }
 }

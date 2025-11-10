@@ -6,6 +6,8 @@ import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 
+import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup;
+
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,9 +62,10 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                             if (numGreen.get() > numPurple.get()) {
                                 m_sorter.occupancy[compartment] = SorterSubsystem.Colour.GREEN;
                             }
-                            if (numPurple.get() > numGreen.get()) {
+                            else if (numPurple.get() > numGreen.get()) {
                                 m_sorter.occupancy[compartment] = SorterSubsystem.Colour.PURPLE;
                             }
+                            else m_sorter.occupancy[compartment] = SorterSubsystem.Colour.NONE;
                         }, m_sorter)
                 );
     }
@@ -100,6 +103,23 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                 }
             }
             return new InstantCommand(() -> {}); // no-op
+        });
+    }
+
+    public Command getAllColoursCommand() {
+        return new SelectCommand(() -> {
+            if (m_sorter.getSorterServoPosition() > SorterSubsystem.READ_COLOUR_ANGLES[SorterSubsystem.READ_COLOUR_ANGLE_ORDER[1]])
+                return new SequentialCommandGroup(
+                        getColourCommand(SorterSubsystem.READ_COLOUR_ANGLE_ORDER[2]),
+                        getColourCommand(SorterSubsystem.READ_COLOUR_ANGLE_ORDER[1]),
+                        getColourCommand(SorterSubsystem.READ_COLOUR_ANGLE_ORDER[0])
+                ); // past middle angle - go to max then iterate back to min position
+            else
+                return new SequentialCommandGroup(
+                        getColourCommand(SorterSubsystem.READ_COLOUR_ANGLE_ORDER[0]),
+                        getColourCommand(SorterSubsystem.READ_COLOUR_ANGLE_ORDER[1]),
+                        getColourCommand(SorterSubsystem.READ_COLOUR_ANGLE_ORDER[2])
+                );
         });
     }
 }
