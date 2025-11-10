@@ -27,11 +27,17 @@ public class ServoSubsystem extends SubsystemBase {
         this(hardwareMap, name, speed, minDegrees, maxDegrees, AngleUnit.DEGREES);
     }
 
+    private final double m_minAngle;
+    private final double m_maxAngle;
+
     public ServoSubsystem(HardwareMap hardwareMap, String name, double speed, double minAngle, double maxAngle, AngleUnit unit) {
         m_servo = new SimpleServo(hardwareMap, name, minAngle, maxAngle, unit);
         m_speed = (speed / 60) * 360; // convert RPM to deg/s
         m_timer = new ElapsedTime();
         m_timer.reset(); // start timer
+
+        m_minAngle = (unit == AngleUnit.RADIANS) ? Math.toDegrees(minAngle) : minAngle;
+        m_maxAngle = (unit == AngleUnit.RADIANS) ? Math.toDegrees(maxAngle) : maxAngle;
     }
 
     public double getCurrentPosition() {
@@ -51,8 +57,11 @@ public class ServoSubsystem extends SubsystemBase {
     public long setAngle(double angle, AngleUnit unit) { // return the expected wait time in msec
         m_servo.turnToAngle(angle, unit);
 
-        if (unit == AngleUnit.RADIANS) m_targetPosition = Math.toDegrees(angle);
-        else m_targetPosition = angle;
+        if (unit == AngleUnit.RADIANS) angle = Math.toDegrees(angle);
+        if (angle < m_minAngle) angle = m_minAngle;
+        else if (angle > m_maxAngle) angle = m_maxAngle;
+
+        m_targetPosition = angle;
         if (Double.isNaN(m_currentPosition)) m_currentPosition = m_targetPosition; // assume that the servo is at the target already
 
         long time = (long) Math.ceil(Math.abs(m_currentPosition - m_targetPosition) / m_speed); // round up waiting time
