@@ -43,6 +43,9 @@ public class ShooterOpMode extends CommandOpMode {
                         m_shooterSubsystem.stopCommand()
                 );
 
+        m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
+                .whenHeld(m_shooterSubsystem.runCommand(0, m_velocity));
+
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.B)
                 .whenHeld(m_shooterSubsystem.runCommand(60, m_velocity));
 
