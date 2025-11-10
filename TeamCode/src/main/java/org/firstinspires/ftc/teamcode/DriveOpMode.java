@@ -77,14 +77,13 @@ public abstract class DriveOpMode extends CommandOpMode {
                     telemetry.addData("Distance to Blue Target (m)", m_visionSubsystem.getBlueTargetRange());
 
                     telemetry.addData("Intake distance sensor distance (cm)", m_intakeSubsystem.getSensorDistance());
+
+                    telemetry.addLine("Sorter occupancy: ") // update constantly
+                            .addData("0", m_sorterSubsystem.occupancy[0])
+                            .addData("1", m_sorterSubsystem.occupancy[1])
+                            .addData("2", m_sorterSubsystem.occupancy[2]);
                 }, m_driveSubsystem
         ));
-        m_sorterSubsystem.setDefaultCommand(new RunCommand(() -> {
-                telemetry.addLine("Sorter occupancy: ")
-                        .addData("0", m_sorterSubsystem.occupancy[0])
-                        .addData("1", m_sorterSubsystem.occupancy[1])
-                        .addData("2", m_sorterSubsystem.occupancy[2]);
-        }, m_sorterSubsystem));
 
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
                 .whenPressed(new InstantCommand(
