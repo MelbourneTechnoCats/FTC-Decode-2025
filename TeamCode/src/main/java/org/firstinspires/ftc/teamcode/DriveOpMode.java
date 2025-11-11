@@ -128,6 +128,6 @@ public abstract class DriveOpMode extends CommandOpMode {
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.GREEN, m_shootVelocity, 60)));
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.GREEN, m_shootVelocity, 60)));
+                .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.PURPLE, m_shootVelocity, 60)));
     }
 }
