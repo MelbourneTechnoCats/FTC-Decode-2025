@@ -74,15 +74,17 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
     private int getClosestCompartment(ArrayList<Integer> compartments) {
         final double currentPosition = m_sorter.getSorterServoPosition();
         int compartment = -1;
-        if (Double.isNaN(currentPosition)) compartment = compartments.get(0); // get any compartment since we don't know the current servo pos yet
-        else {
-            /* find closest compartment */
-            double minPositionDelta = Double.POSITIVE_INFINITY;
-            for (Integer iterCompartment : compartments) {
-                double delta = Math.abs(currentPosition - SorterSubsystem.INTAKE_ANGLES[iterCompartment]);
-                if (delta < minPositionDelta) {
-                    minPositionDelta = delta;
-                    compartment = iterCompartment;
+        if (compartments.size() > 0) {
+            if (Double.isNaN(currentPosition)) compartment = compartments.get(0); // get any compartment since we don't know the current servo pos yet
+            else {
+                /* find closest compartment */
+                double minPositionDelta = Double.POSITIVE_INFINITY;
+                for (Integer iterCompartment : compartments) {
+                    double delta = Math.abs(currentPosition - SorterSubsystem.INTAKE_ANGLES[iterCompartment]);
+                    if (delta < minPositionDelta) {
+                        minPositionDelta = delta;
+                        compartment = iterCompartment;
+                    }
                 }
             }
         }
@@ -134,12 +136,14 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
     }
 
     public Command loadIntoShooterCommand(SorterSubsystem.Colour colour, boolean strict) {
-        if (strict || m_sorter.occupancy[0] == colour || m_sorter.occupancy[1] == colour || m_sorter.occupancy[2] == colour) {
-            return loadIntoShooterCommand(colour);
-        }
-        else{
-            return loadIntoShooterCommand();
-        }
+        return new SelectCommand(() -> {
+            if (strict || m_sorter.occupancy[0] == colour || m_sorter.occupancy[1] == colour || m_sorter.occupancy[2] == colour) {
+                return loadIntoShooterCommand(colour);
+            }
+            else{
+                return loadIntoShooterCommand();
+            }
+        });
     }
 
     public Command loadIntoShooterCommand() { // by closest compartment containing any colour
