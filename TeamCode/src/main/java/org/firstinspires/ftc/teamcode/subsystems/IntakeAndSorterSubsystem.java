@@ -133,6 +133,15 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
         });
     }
 
+    public Command loadIntoShooterCommand(SorterSubsystem.Colour colour, boolean strict) {
+        if (strict || m_sorter.occupancy[0] == colour || m_sorter.occupancy[1] == colour || m_sorter.occupancy[2] == colour) {
+            return loadIntoShooterCommand(colour);
+        }
+        else{
+            return loadIntoShooterCommand();
+        }
+    }
+
     public Command loadIntoShooterCommand() { // by closest compartment containing any colour
         return new SelectCommand(() -> {
             /* get suitable compartments */

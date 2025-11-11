@@ -2,18 +2,11 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.Command;
-import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
-import com.arcrobotics.ftclib.command.StartEndCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.command.WaitUntilCommand;
-import com.arcrobotics.ftclib.controller.PIDController;
-import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -134,26 +127,35 @@ public class ShooterSubsystem extends SubsystemBase {
         return shootCommandWithVelocity(position, velocity, angle);
     }
 
-    public Command shootCommand(SorterSubsystem.Colour colour, double distance, double angle) {
+    public Command shootCommand(SorterSubsystem.Colour colour, double distance, double angle, boolean strict) {
         double velocity = getGoalVelocityFromDistance(angle, distance);
-        return shootCommandWithVelocity(colour, velocity, angle);
+        return shootCommandWithVelocity(colour, velocity, angle, strict);
     }
+
+    public Command shootCommand(SorterSubsystem.Colour colour, double distance, double angle) {
+        return shootCommand(colour, distance, angle, true);
+    }
+
 
     public Command shootCommand(double distance, double angle) {
         double velocity = getGoalVelocityFromDistance(angle, distance);
         return shootCommandWithVelocity(velocity, angle);
     }
 
-    public Command shootCommandWithVelocity(SorterSubsystem.Colour colour, double velocity, double angle) {
+    public Command shootCommandWithVelocity(SorterSubsystem.Colour colour, double velocity, double angle, boolean strict) {
         return runCommand(angle, velocity)
                 .raceWith(
                         new SequentialCommandGroup(
                                 new WaitUntilCommand(this::isVelocityReached),
                                 new WaitCommand(kRampWaitTime),
-                                m_intakeAndSorter.loadIntoShooterCommand(colour),
+                                m_intakeAndSorter.loadIntoShooterCommand(colour, strict),
                                 new WaitCommand(kLoadWaitTime)
                         )
                 );
+    }
+
+    public Command shootCommandWithVelocity(SorterSubsystem.Colour colour, double velocity, double angle) {
+        return shootCommandWithVelocity(colour, velocity, angle, true);
     }
 
     public Command shootCommandWithVelocity(int position, double velocity, double angle) {
