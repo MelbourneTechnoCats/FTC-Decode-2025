@@ -133,9 +133,19 @@ public class ShooterSubsystem extends SubsystemBase {
         return getGoalVelocity(targetX, targetY, angle);
     }
 
+    public Command shootCommand(int position, double distance, double angle) {
+        double velocity = getGoalVelocityFromDistance(angle, distance);
+        return shootCommandWithVelocity(position, velocity, angle);
+    }
+
     public Command shootCommand(SorterSubsystem.Colour colour, double distance, double angle) {
         double velocity = getGoalVelocityFromDistance(angle, distance);
         return shootCommandWithVelocity(colour, velocity, angle);
+    }
+
+    public Command shootCommand(double distance, double angle) {
+        double velocity = getGoalVelocityFromDistance(angle, distance);
+        return shootCommandWithVelocity(velocity, angle);
     }
 
     public Command shootCommandWithVelocity(SorterSubsystem.Colour colour, double velocity, double angle) {
@@ -145,6 +155,30 @@ public class ShooterSubsystem extends SubsystemBase {
                                 new WaitUntilCommand(this::isVelocityReached),
                                 new WaitCommand(kRampWaitTime),
                                 m_intakeAndSorter.loadIntoShooterCommand(colour),
+                                new WaitCommand(kLoadWaitTime)
+                        )
+                );
+    }
+
+    public Command shootCommandWithVelocity(int position, double velocity, double angle) {
+        return runCommand(angle, velocity)
+                .raceWith(
+                        new SequentialCommandGroup(
+                                new WaitUntilCommand(this::isVelocityReached),
+                                new WaitCommand(kRampWaitTime),
+                                m_intakeAndSorter.loadIntoShooterCommand(position),
+                                new WaitCommand(kLoadWaitTime)
+                        )
+                );
+    }
+
+    public Command shootCommandWithVelocity(double velocity, double angle) {
+        return runCommand(angle, velocity)
+                .raceWith(
+                        new SequentialCommandGroup(
+                                new WaitUntilCommand(this::isVelocityReached),
+                                new WaitCommand(kRampWaitTime),
+                                m_intakeAndSorter.loadIntoShooterCommand(), // any colour
                                 new WaitCommand(kLoadWaitTime)
                         )
                 );

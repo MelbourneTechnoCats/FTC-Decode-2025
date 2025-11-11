@@ -71,6 +71,24 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                 );
     }
 
+    private int getClosestCompartment(ArrayList<Integer> compartments) {
+        final double currentPosition = m_sorter.getSorterServoPosition();
+        int compartment = -1;
+        if (Double.isNaN(currentPosition)) compartment = compartments.get(0); // get any compartment since we don't know the current servo pos yet
+        else {
+            /* find closest compartment */
+            double minPositionDelta = Double.POSITIVE_INFINITY;
+            for (Integer iterCompartment : compartments) {
+                double delta = Math.abs(currentPosition - SorterSubsystem.INTAKE_ANGLES[iterCompartment]);
+                if (delta < minPositionDelta) {
+                    minPositionDelta = delta;
+                    compartment = iterCompartment;
+                }
+            }
+        }
+        return compartment;
+    }
+
     public Command intakeCommand() {
         return new SelectCommand(() -> {
             /* get empty compartments */
@@ -80,22 +98,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                     empty.add(i);
             }
 
-            final double currentPosition = m_sorter.getSorterServoPosition();
-            int compartment = -1;
-            if (Double.isNaN(currentPosition)) compartment = empty.get(0); // get any compartment since we don't know the current servo pos yet
-            else {
-                /* find closest compartment */
-                double minPositionDelta = Double.POSITIVE_INFINITY;
-                for (Integer iterCompartment : empty) {
-                    double delta = Math.abs(currentPosition - SorterSubsystem.INTAKE_ANGLES[iterCompartment]);
-                    if (delta < minPositionDelta) {
-                        minPositionDelta = delta;
-                        compartment = iterCompartment;
-                    }
-                }
-
-            }
-
+            int compartment = getClosestCompartment(empty);
             if (compartment < 0) return new InstantCommand(() -> {}); // no empty compartments - no-op
 
             return setSorterAngleCommand(compartment, true) // find unoccupied sorter compartment
@@ -104,7 +107,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
         });
     }
 
-    public Command loadIntoShooterCommand(int position) {
+    public Command loadIntoShooterCommand(int position) { // by position
         return setSorterAngleCommand(position, false)
                 .andThen(
                         m_sorter.setLeverAngleCommand(false)
@@ -115,14 +118,33 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                 .andThen(m_sorter.setLeverAngleCommand(true));
     }
 
-    public Command loadIntoShooterCommand(SorterSubsystem.Colour colour) {
+    public Command loadIntoShooterCommand(SorterSubsystem.Colour colour) { // by closest compartment containing colour
         return new SelectCommand(() -> {
-            for (int pos = 0; pos < 3; pos++) {
-                if (m_sorter.occupancy[pos] == colour) {
-                    return loadIntoShooterCommand(pos);
-                }
+            /* get suitable compartments */
+            ArrayList<Integer> compartments = new ArrayList<>(3); // suitable compartments' indices
+            for (int i = 0; i < 3; i++) {
+                if (m_sorter.occupancy[i] == colour)
+                    compartments.add(i);
             }
-            return new InstantCommand(() -> {}); // no-op
+
+            int compartment = getClosestCompartment(compartments);
+            if (compartment == -1) return new InstantCommand(() -> {});
+            return loadIntoShooterCommand(compartment);
+        });
+    }
+
+    public Command loadIntoShooterCommand() { // by closest compartment containing any colour
+        return new SelectCommand(() -> {
+            /* get suitable compartments */
+            ArrayList<Integer> compartments = new ArrayList<>(3); // suitable compartments' indices
+            for (int i = 0; i < 3; i++) {
+                if (m_sorter.occupancy[i] != SorterSubsystem.Colour.NONE)
+                    compartments.add(i);
+            }
+
+            int compartment = getClosestCompartment(compartments);
+            if (compartment == -1) return new InstantCommand(() -> {});
+            return loadIntoShooterCommand(compartment);
         });
     }
 
