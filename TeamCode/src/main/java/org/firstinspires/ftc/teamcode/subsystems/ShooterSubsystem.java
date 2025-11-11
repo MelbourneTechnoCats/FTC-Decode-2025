@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.StartEndCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.command.WaitCommand;
@@ -22,30 +23,30 @@ import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup;
 @Config
 public class ShooterSubsystem extends SubsystemBase {
 //    MotorGroup m_motorGroup;//
-    private final MotorEx m_leftMotor;
-    private final MotorEx m_rightMotor;
-    private final MotorGroup m_motorGroup;
+    private final MotorSubsystem m_leftMotor;
+    private final MotorSubsystem m_rightMotor;
     private final ServoSubsystem m_servo;
 
- public static double kshooterP = 0.004;
- public static double kshooterI = 0;
- public static double kshooterD = 0;
- public static double kshooterA = 0;
- public static double kshooterS = 1.0;
- public static double kshooterV = 0.0018;
- private static final double kshooterGearRatio = 1;
- private static final double kshooterEncoderResolution = 28*kshooterGearRatio;
- private static final double kshooterMaxSpeed = 6000/kshooterGearRatio;
+    public static double kLeftP = 0.004;
+    public static double kLeftI = 0;
+    public static double kLeftD = 0;
+    public static double kLeftS = 1.0;
+    public static double kLeftV = 0.0018;
+    public static double kLeftA = 0;
+
+    /* TODO: tune these */
+    public static double kRightP = 0.004;
+    public static double kRightI = 0;
+    public static double kRightD = 0;
+    public static double kRightS = 1.0;
+    public static double kRightV = 0.0018;
+    public static double kRightA = 0;
+
+    private static final double kshooterGearRatio = 1;
+    private static final double kshooterEncoderResolution = 28*kshooterGearRatio;
     private final Telemetry m_telemetry;
     static final double MIN_ANGLE = 0;
     static final double MAX_ANGLE = 300;
-
-    private final PIDController m_pidController;
-    private SimpleMotorFeedforward m_ffController;
-
-    private double m_targetVelocity = 0;
-
-    HardwareMap.DeviceMapping<VoltageSensor> m_voltageSensors;
 
     private IntakeAndSorterSubsystem m_intakeAndSorter;
 
@@ -83,29 +84,24 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double kServoZeroAngle = MIN_ANGLE; // servo position where the shooter is pointing 0 deg (outward)
     private static final double kServoGearRatio = (double) 100 / 30;
 
+    private static final double kVelocityTolerance = 0.05; // error margin (proportional to target velocity)
+
     public ShooterSubsystem(final HardwareMap hardwareMap, IntakeAndSorterSubsystem intakeAndSorter, Telemetry telemetry){
-         m_servo = new ServoSubsystem(hardwareMap, "shooterServo", kServoSpeed, MIN_ANGLE, MAX_ANGLE);
-         m_leftMotor = new MotorEx(hardwareMap, "leftShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed );
-         m_rightMotor = new MotorEx(hardwareMap, "rightShooterMotor",kshooterEncoderResolution,kshooterMaxSpeed);
-         m_rightMotor.setInverted(true);
-         m_motorGroup = new MotorGroup(m_leftMotor, m_rightMotor);
-//        m_motorGroup.setRunMode(Motor.RunMode.VelocityControl);
-//        m_motorGroup.setVeloCoefficients(kshooterP,kshooterI,kshooterD);
-//        m_motorGroup.setFeedforwardCoefficients(kshooterS, kshooterV, kshooterA);
-         m_telemetry = telemetry;
+        m_servo = new ServoSubsystem(hardwareMap, "shooterServo", kServoSpeed, MIN_ANGLE, MAX_ANGLE);
+        m_leftMotor = new MotorSubsystem(
+                hardwareMap, "leftShooterMotor", kshooterEncoderResolution, false,
+                kLeftP, kLeftI, kLeftD, kLeftS, kLeftV, kLeftA,
+                kVelocityTolerance
+        );
+        m_rightMotor = new MotorSubsystem(
+                hardwareMap, "rightShooterMotor", kshooterEncoderResolution, true,
+                kRightP, kRightI, kRightD, kRightS, kRightV, kRightA,
+                kVelocityTolerance
+        );
+        m_telemetry = telemetry;
         m_intakeAndSorter = intakeAndSorter;
-
-         m_pidController = new PIDController(kshooterP, kshooterI, kshooterD);
-         m_ffController = new SimpleMotorFeedforward(kshooterS, kshooterV, kshooterA);
-
-        m_voltageSensors = hardwareMap.voltageSensor;
     }
     private double m_goalVelocityMultiplier = 1.15; // TODO: tune this
-
-    public double getVelocity() { // get velocity in rpm
-        double velocity = m_motorGroup.getVelocity(); // in ticks per second
-        return velocity * 60 / kshooterEncoderResolution;
-    }
 
     public double getGoalVelocity(double targetX, double targetY, double angle) {
         angle = Math.toRadians(angle);
@@ -185,42 +181,19 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void periodic() {
-        double velocity = getVelocity();
-//        double position = m_motorGroup.getCurrentPosition(); // substitutes for angle
-//        double revolutions = m_motorGroup.encoder.getRevolutions();
-//        double distance = m_motorGroup.encoder.getDistance();
-
-        double voltage = getBatteryVoltage();
-        m_telemetry.addData("Battery voltage", voltage);
-//
         m_telemetry.addLine("Shooter: ")
-                .addData("target", m_targetVelocity)
-                .addData("actual", velocity);
-////        m_telemetry.addData("Position", position);
-//        m_telemetry.addData("Revolutions", revolutions);
-//        m_telemetry.addData("Distance", distance);
-//        m_telemetry.update();
+                .addData("target", new double[] { m_leftMotor.getTargetVelocity(), m_rightMotor.getTargetVelocity() })
+                .addData("actual", new double[] { m_leftMotor.getVelocity(), m_rightMotor.getVelocity() });
 
-        m_pidController.setPID(kshooterP,kshooterI,kshooterD);
-        m_ffController = new SimpleMotorFeedforward(kshooterS, kshooterV, kshooterA);
-
-        double power = (m_pidController.calculate(getVelocity(), m_targetVelocity) + m_ffController.calculate(m_targetVelocity)) / voltage;
-        m_motorGroup.set(Math.max(-1, Math.min(1, power)));
+        // NOTE: only do this when tuning - comment out once finish
+        m_leftMotor.setPIDCoefficients(kLeftP, kLeftI, kLeftD);
+        m_leftMotor.setFFCoefficients(kLeftS, kLeftV, kLeftA);
+        m_rightMotor.setPIDCoefficients(kRightP, kRightI, kRightD);
+        m_rightMotor.setFFCoefficients(kRightS, kRightV, kRightA);
     }
-
-
-    public void setVelocity(double velocity) {
-        m_targetVelocity = velocity;
-    }
-
-    private static final double VELOCITY_TOLERANCE = 120;
 
     public boolean isVelocityReached() {
-        return Math.abs(getVelocity() - m_targetVelocity) < VELOCITY_TOLERANCE;
-    }
-
-    public void stop() {
-        m_targetVelocity = 0;
+        return m_leftMotor.isVelocityReached() && m_rightMotor.isVelocityReached();
     }
 
     public Command setAngleCommand(double angle) {
@@ -229,24 +202,19 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public Command runCommand(double angle, double velocity)
     {
-        return new StartEndCommand(() -> { setVelocity(velocity); }, this::stop,this)
-                .alongWith(setAngleCommand(angle));
+        return new ParallelCommandGroup(
+                setAngleCommand(angle),
+                m_leftMotor.setVelocityCommand(velocity),
+                m_rightMotor.setVelocityCommand(velocity)
+        );
     }
 
     public Command stopCommand()
     {
-        return new InstantCommand(this::stop, this);
-    }
-
-    private double getBatteryVoltage() {
-        double result = Double.POSITIVE_INFINITY;
-        for (VoltageSensor sensor : m_voltageSensors) {
-            double voltage = sensor.getVoltage();
-            if (voltage > 0) {
-                result = Math.min(result, voltage);
-            }
-        }
-        return result;
+        return new ParallelCommandGroup(
+                m_leftMotor.setPowerCommand(0),
+                m_rightMotor.setPowerCommand(0)
+        ); // TODO: determine if we want to brake (i.e. set velocity to 0), or we just want to cut off power (as we do right now)
     }
 
     public double getGoalVelocityMultiplier() {

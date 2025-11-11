@@ -36,20 +36,13 @@ public class ShooterOpMode extends CommandOpMode {
         m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
 
-        m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whileHeld(new RunCommand(() -> {
-                    m_shooterSubsystem.setVelocity(m_velocity);
-                }, m_shooterSubsystem)).whenReleased(
-                        m_shooterSubsystem.stopCommand()
-                );
-
-        m_shootGamepad.getGamepadButton(GamepadKeys.Button.A)
+        m_shootGamepad.getGamepadButton(GamepadKeys.Button.A) // use this for calibrating servo
                 .whenHeld(m_shooterSubsystem.runCommand(0, m_velocity));
 
-        m_shootGamepad.getGamepadButton(GamepadKeys.Button.B)
+        m_shootGamepad.getGamepadButton(GamepadKeys.Button.B) // typical shooting
                 .whenHeld(m_shooterSubsystem.runCommand(60, m_velocity));
 
-        m_shootGamepad.getGamepadButton(GamepadKeys.Button.Y)
+        m_shootGamepad.getGamepadButton(GamepadKeys.Button.Y) // should be maximum range
                 .whenHeld(m_shooterSubsystem.runCommand(90, m_velocity));
     }
 }
