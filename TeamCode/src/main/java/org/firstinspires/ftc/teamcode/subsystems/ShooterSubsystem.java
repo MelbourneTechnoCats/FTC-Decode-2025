@@ -183,9 +183,13 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void periodic() {
-        m_telemetry.addLine("Shooter: ")
-                .addData("target", new double[] { m_leftMotor.getTargetVelocity(), m_rightMotor.getTargetVelocity() })
-                .addData("actual", new double[] { m_leftMotor.getVelocity(), m_rightMotor.getVelocity() });
+        m_telemetry.addLine("Left Shooter: ")
+                .addData("target", m_leftMotor.getTargetVelocity())
+                .addData("actual", m_leftMotor.getVelocity());
+        m_telemetry.addLine("Right Shooter: ")
+                .addData("target", m_rightMotor.getTargetVelocity())
+                .addData("actual", m_rightMotor.getVelocity());
+        m_telemetry.addData("Shooter velocity reached", isVelocityReached());
 
         // NOTE: only do this when tuning - comment out once finish
         m_leftMotor.setPIDCoefficients(kLeftP, kLeftI, kLeftD);

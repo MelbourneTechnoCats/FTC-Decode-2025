@@ -44,5 +44,7 @@ public class ShooterOpMode extends CommandOpMode {
 
         m_shootGamepad.getGamepadButton(GamepadKeys.Button.Y) // should be maximum range
                 .whenHeld(m_shooterSubsystem.runCommand(90, m_velocity));
+
+        m_intakeAndSorter.setDefaultCommand(new RunCommand(() -> { telemetry.update(); }, m_intakeAndSorter));
     }
 }
