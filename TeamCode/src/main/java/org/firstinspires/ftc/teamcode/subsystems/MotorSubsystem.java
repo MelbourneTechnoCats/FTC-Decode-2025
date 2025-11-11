@@ -96,6 +96,8 @@ public class MotorSubsystem extends SubsystemBase {
 
     HardwareMap.DeviceMapping<VoltageSensor> m_voltageSensors;
 
+    private final double m_encoderResolution;
+
     public MotorSubsystem(
             HardwareMap hardwareMap, String name, double encoderResolution, /* in cpr */ boolean inverted,
             double kP, double kI, double kD, double kS, double kV, double kA,
@@ -103,6 +105,7 @@ public class MotorSubsystem extends SubsystemBase {
     ) {
         m_motor = new MotorEx(hardwareMap, name, encoderResolution, 0); // the maximum RPM here is not relevant, since we'll be running our own velocity controller
         m_motor.setInverted(inverted);
+        m_encoderResolution = encoderResolution;
 
         m_pidController = new PIDController(kP, kI, kD);
         m_ffController = new SimpleMotorFeedforward(kS, kV, kA);
@@ -144,7 +147,7 @@ public class MotorSubsystem extends SubsystemBase {
     }
 
     public double getVelocity() {
-        return m_motor.getCorrectedVelocity();
+        return m_motor.getCorrectedVelocity()  * 60 / m_encoderResolution;
     }
 
     private double getBatteryVoltage() {
