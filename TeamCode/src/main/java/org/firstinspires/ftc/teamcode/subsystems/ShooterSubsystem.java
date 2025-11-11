@@ -94,7 +94,7 @@ public class ShooterSubsystem extends SubsystemBase {
         m_telemetry = telemetry;
         m_intakeAndSorter = intakeAndSorter;
     }
-    private double m_goalVelocityMultiplier = 1.15; // TODO: tune this
+    private double m_goalVelocityMultiplier = 1.80; // TODO: tune this
 
     public double getGoalVelocity(double targetX, double targetY, double angle) {
         angle = Math.toRadians(angle);
