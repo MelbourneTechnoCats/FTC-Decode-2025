@@ -8,6 +8,7 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 
 import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -72,15 +73,34 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
 
     public Command intakeCommand() {
         return new SelectCommand(() -> {
+            /* get empty compartments */
+            ArrayList<Integer> empty = new ArrayList<>(3); // empty compartments' indices
             for (int i = 0; i < 3; i++) {
-                if (m_sorter.occupancy[i] == SorterSubsystem.Colour.NONE) {
-                    int compartment = i; // to keep Java happy
-                    return setSorterAngleCommand(compartment, true) // find unoccupied sorter compartment
-                            .andThen(m_intake.runCommand().interruptOn(m_intake::isBallThere)) // load ball in
-                            .andThen(new SelectCommand(() -> getColourCommand(compartment))); // finally update occupancy
-                }
+                if (m_sorter.occupancy[i] == SorterSubsystem.Colour.NONE)
+                    empty.add(i);
             }
-            return new InstantCommand(() -> {}); // no-op
+
+            final double currentPosition = m_sorter.getSorterServoPosition();
+            int compartment = -1;
+            if (Double.isNaN(currentPosition)) compartment = empty.get(0); // get any compartment since we don't know the current servo pos yet
+            else {
+                /* find closest compartment */
+                double minPositionDelta = Double.POSITIVE_INFINITY;
+                for (Integer iterCompartment : empty) {
+                    double delta = Math.abs(currentPosition - SorterSubsystem.INTAKE_ANGLES[iterCompartment]);
+                    if (delta < minPositionDelta) {
+                        minPositionDelta = delta;
+                        compartment = iterCompartment;
+                    }
+                }
+
+            }
+
+            if (compartment < 0) return new InstantCommand(() -> {}); // no empty compartments - no-op
+
+            return setSorterAngleCommand(compartment, true) // find unoccupied sorter compartment
+                    .andThen(m_intake.runCommand().interruptOn(m_intake::isBallThere)) // load ball in
+                    .andThen(getColourCommand(compartment)); // finally update occupancy
         });
     }
 
