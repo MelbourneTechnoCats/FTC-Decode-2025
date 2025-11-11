@@ -86,7 +86,7 @@ public class SorterSubsystem extends SubsystemBase {
                 }
                 occupancy[readingCompartment] = getColour();
             }
-        }));
+        }, this));
     }
 
     public Command getColourCommand(int compartment) {
