@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -103,8 +104,14 @@ public abstract class DriveOpMode extends CommandOpMode {
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(m_liftSubsystem.extendCommand());
 
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.A)
+                .whileHeld(m_intakeAndSorter.intakeCommand());
         m_opGamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenHeld(m_intakeAndSorter.intakeCommand());
+                .whenPressed(new ParallelCommandGroup(
+                        m_shooterSubsystem.runCommand(0, 0),
+                        new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(true), false))
+                ))
+                .whenReleased(m_intakeAndSorter.getAllColoursCommand());
 
         m_opGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
                 .whenPressed(m_intakeAndSorter.getAllColoursCommand());

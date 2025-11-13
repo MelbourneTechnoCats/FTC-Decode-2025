@@ -9,6 +9,7 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -71,7 +72,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                 );
     }
 
-    private int getClosestCompartment(ArrayList<Integer> compartments) {
+    public int getClosestCompartment(ArrayList<Integer> compartments, boolean toIntake) {
         final double currentPosition = m_sorter.getSorterServoPosition();
         int compartment = -1;
         if (compartments.size() > 0) {
@@ -80,7 +81,8 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                 /* find closest compartment */
                 double minPositionDelta = Double.POSITIVE_INFINITY;
                 for (Integer iterCompartment : compartments) {
-                    double delta = Math.abs(currentPosition - SorterSubsystem.INTAKE_ANGLES[iterCompartment]);
+                    double angle = (toIntake) ? SorterSubsystem.INTAKE_ANGLES[iterCompartment] : SorterSubsystem.LEVER_ANGLES[iterCompartment];
+                    double delta = Math.abs(currentPosition - angle);
                     if (delta < minPositionDelta) {
                         minPositionDelta = delta;
                         compartment = iterCompartment;
@@ -89,6 +91,10 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
             }
         }
         return compartment;
+    }
+
+    public int getClosestCompartment(boolean toIntake) {
+        return getClosestCompartment((ArrayList<Integer>) Arrays.asList(0, 1, 2), toIntake);
     }
 
     public Command intakeCommand() {
@@ -100,7 +106,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                     empty.add(i);
             }
 
-            int compartment = getClosestCompartment(empty);
+            int compartment = getClosestCompartment(empty, true);
             if (compartment < 0) return new InstantCommand(() -> {}); // no empty compartments - no-op
 
             return setSorterAngleCommand(compartment, true) // find unoccupied sorter compartment
@@ -129,7 +135,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                     compartments.add(i);
             }
 
-            int compartment = getClosestCompartment(compartments);
+            int compartment = getClosestCompartment(compartments, true);
             if (compartment == -1) return new InstantCommand(() -> {});
             return loadIntoShooterCommand(compartment);
         });
@@ -155,7 +161,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                     compartments.add(i);
             }
 
-            int compartment = getClosestCompartment(compartments);
+            int compartment = getClosestCompartment(compartments, true);
             if (compartment == -1) return new InstantCommand(() -> {});
             return loadIntoShooterCommand(compartment);
         });
