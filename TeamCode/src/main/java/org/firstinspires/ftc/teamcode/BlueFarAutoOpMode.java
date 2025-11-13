@@ -100,6 +100,11 @@ public class BlueFarAutoOpMode extends CommandOpMode {
         m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
 
+        /* initial artifact positions in the sorter */
+        m_sorterSubsystem.occupancy[0] = SorterSubsystem.Colour.PURPLE;
+        m_sorterSubsystem.occupancy[1] = SorterSubsystem.Colour.PURPLE;
+        m_sorterSubsystem.occupancy[2] = SorterSubsystem.Colour.GREEN;
+
         Command shootPurpleCommand = m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, SHOOT_DISTANCE, SHOOT_ANGLE);
         Command shootGreenCommand = m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, SHOOT_DISTANCE, SHOOT_ANGLE);
 

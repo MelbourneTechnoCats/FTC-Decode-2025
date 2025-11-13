@@ -151,5 +151,7 @@ public abstract class DriveOpMode extends CommandOpMode {
 
 //        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
 //                .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.PURPLE, m_shootVelocity, 60)));
+
+        m_intakeAndSorter.getAllColoursCommand().schedule(false); // initialise occupancy
     }
 }
