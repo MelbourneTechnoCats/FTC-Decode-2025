@@ -12,6 +12,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
@@ -25,6 +26,7 @@ public abstract class DriveOpMode extends CommandOpMode {
     private IntakeSubsystem m_intakeSubsystem;
     private SorterSubsystem m_sorterSubsystem;
     private VisionSubsystem m_visionSubsystem;
+    private LiftSubsystem m_liftSubsystem;
     private IntakeAndSorterSubsystem m_intakeAndSorter;
     private ShooterSubsystem m_shooterSubsystem;
     private boolean m_fieldCentric = false;
@@ -48,12 +50,15 @@ public abstract class DriveOpMode extends CommandOpMode {
     public void initialize(boolean blue) {
         m_driveGamepad = new GamepadEx(gamepad1);
         m_opGamepad = new GamepadEx(gamepad2);
+
         m_visionSubsystem = new VisionSubsystem(hardwareMap, telemetry);
         m_driveSubsystem = new DriveSubsystem(hardwareMap, new Pose2d(0, 0, 0), telemetry, m_visionSubsystem);
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);
         m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
         m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
+        m_liftSubsystem = new LiftSubsystem(hardwareMap);
+
         m_driveSubsystem.setDefaultCommand(new RunCommand(
                 () -> {
                     double leftX = m_driveGamepad.getLeftX();
@@ -95,6 +100,8 @@ public abstract class DriveOpMode extends CommandOpMode {
                             m_fieldCentric = !m_fieldCentric;
                         }
                 ));
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.Y)
+                .whenPressed(m_liftSubsystem.extendCommand());
 
         m_opGamepad.getGamepadButton(GamepadKeys.Button.B)
                 .whenHeld(m_intakeAndSorter.intakeCommand());
