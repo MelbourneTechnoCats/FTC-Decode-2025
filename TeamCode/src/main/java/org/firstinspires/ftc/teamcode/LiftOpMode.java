@@ -18,8 +18,8 @@ public class LiftOpMode extends CommandOpMode {
         m_liftSubsystem = new LiftSubsystem(hardwareMap);
 
         m_gamepad.getGamepadButton(GamepadKeys.Button.Y)
-                .whenPressed(m_liftSubsystem.setAngleCommand(30));
+                .whenPressed(m_liftSubsystem.extendCommand());
         m_gamepad.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(m_liftSubsystem.setAngleCommand(0));
+                .whenPressed(m_liftSubsystem.retractCommand());
     }
 }
