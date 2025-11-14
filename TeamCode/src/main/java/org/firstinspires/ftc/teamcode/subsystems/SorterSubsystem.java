@@ -47,8 +47,8 @@ public class SorterSubsystem extends SubsystemBase {
 
     private static float COLOUR_SENSOR_GAIN = 21;
 
-    private static double LEVER_SERVO_SPEED = 115; // GoBilda Dual Mode Speed servo no-load speed @ 6.0V
-    private static double SORTER_SERVO_SPEED = 50; // GoBilda Dual Mode Torque servo no-load speed @ 6.0V
+    public static double LEVER_SERVO_SPEED = 100; // GoBilda Dual Mode Speed servo no-load speed @ 6.0V
+    public static double SORTER_SERVO_SPEED = 40; // GoBilda Dual Mode Torque servo no-load speed @ 6.0V
     // NOTE: both servos are now powered by the REV Servo Hub
 
     static final Double[] INTAKE_ANGLES = new Double[]{C0_INTAKE_ANGLE, C1_INTAKE_ANGLE, C2_INTAKE_ANGLE};
