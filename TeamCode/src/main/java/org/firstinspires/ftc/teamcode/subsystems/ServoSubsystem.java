@@ -33,8 +33,6 @@ public class ServoSubsystem extends SubsystemBase {
     public ServoSubsystem(HardwareMap hardwareMap, String name, double speed, double minAngle, double maxAngle, AngleUnit unit) {
         m_servo = new SimpleServo(hardwareMap, name, minAngle, maxAngle, unit);
         m_speed = (speed / 60) * 360; // convert RPM to deg/s
-        m_timer = new ElapsedTime();
-        m_timer.reset(); // start timer
 
         m_minAngle = (unit == AngleUnit.RADIANS) ? Math.toDegrees(minAngle) : minAngle;
         m_maxAngle = (unit == AngleUnit.RADIANS) ? Math.toDegrees(maxAngle) : maxAngle;
@@ -75,6 +73,11 @@ public class ServoSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        if (m_timer == null) {
+            m_timer = new ElapsedTime();
+            m_timer.reset(); // start timer
+        }
+
         double currentTimestamp = m_timer.seconds();
         double elapsedTime = Math.abs(currentTimestamp - m_lastTimestamp); // the abs is there just to be safe
         if (elapsedTime >= kUpdateInterval) {
