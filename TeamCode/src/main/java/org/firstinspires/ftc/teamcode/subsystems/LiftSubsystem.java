@@ -20,13 +20,18 @@ public class LiftSubsystem extends SubsystemBase {
     private static final double kLeftGearRatio = (double) 80 / 12;
     private static final double kRightGearRatio = (double) 80 / 15;
 
-    private static final double kLeftRetractPosition = kServoMinAngle;
-    private static final double kRightRetractPosition = kServoMaxAngle;
+    private static final double kServoPositionPadding = 5;
 
-    private static final double kLiftAngle = 30;
+    private static final double kLeftRetractPosition = kServoMaxAngle - kServoPositionPadding;
+    private static final double kRightRetractPosition = kServoMinAngle + kServoPositionPadding;
 
-    private static final double kLeftExtendPosition = kLeftRetractPosition + kLiftAngle * kLeftGearRatio;
-    private static final double kRightExtendPosition = kRightRetractPosition - kLiftAngle * kRightGearRatio;
+    private static final double kLiftAngle = (kRightGearRatio - kServoPositionPadding) / Math.max(kLeftGearRatio, kRightGearRatio);
+    // maximum lift angle achievable on both sides (to avoid unbalancing)
+
+    private static final double kLeftExtendPosition =
+            Math.min(kLeftRetractPosition - kLiftAngle * kLeftGearRatio, kServoPositionPadding);
+    private static final double kRightExtendPosition =
+            Math.max(kRightRetractPosition + kLiftAngle * kRightGearRatio, kServoMaxAngle - kServoPositionPadding);
 
     private ServoSubsystem m_leftServo, m_rightServo;
 
