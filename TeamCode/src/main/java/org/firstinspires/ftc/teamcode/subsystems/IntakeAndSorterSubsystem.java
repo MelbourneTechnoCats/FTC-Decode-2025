@@ -94,7 +94,9 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
     }
 
     public int getClosestCompartment(boolean toIntake) {
-        return getClosestCompartment((ArrayList<Integer>) Arrays.asList(0, 1, 2), toIntake);
+        ArrayList<Integer> compartments = new ArrayList<>();
+        for (int i = 0; i < 3; i++) compartments.add(i);
+        return getClosestCompartment(compartments, toIntake);
     }
 
     public Command intakeCommand() {
