@@ -30,6 +30,10 @@ public class IntakeSubsystem extends SubsystemBase {
         _motor.set(-1.0);
     }
 
+    public void reverseMotor() {
+        _motor.set(1.0);
+    }
+
     public void stopMotor() {
         _motor.set(0);
     }
@@ -38,6 +42,14 @@ public class IntakeSubsystem extends SubsystemBase {
     {
         return new StartEndCommand(
                 this::runMotor, this::stopMotor,
+                this
+        );
+    }
+
+    public Command reverseCommand()
+    {
+        return new StartEndCommand(
+                this::reverseMotor, this::stopMotor,
                 this
         );
     }

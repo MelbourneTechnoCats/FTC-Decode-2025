@@ -7,9 +7,11 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SelectCommand;
+import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 
+import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
@@ -47,6 +49,9 @@ public abstract class DriveOpMode extends CommandOpMode {
     }
 
     public static double m_shootVelocity = 3000;
+
+    private static final double kShootAngle = 75;
+    private static final double kDefaultRange = 1.80;
 
     public void initialize(boolean blue) {
         m_driveGamepad = new GamepadEx(gamepad1);
@@ -106,44 +111,56 @@ public abstract class DriveOpMode extends CommandOpMode {
 
         m_opGamepad.getGamepadButton(GamepadKeys.Button.A)
                 .whileHeld(m_intakeAndSorter.intakeCommand());
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.X)
+                .whileHeld(m_intakeSubsystem.reverseCommand());
         m_opGamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenPressed(new ParallelCommandGroup(
-                        m_shooterSubsystem.runCommand(0, 0),
-                        new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(true), false))
+                .whenPressed(new SequentialCommandGroup(
+                        new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(true), false)),
+                        m_shooterSubsystem.setAngleCommand(10)
                 ))
-                .whenReleased(m_intakeAndSorter.getAllColoursCommand());
+                .whenReleased(new SequentialCommandGroup(
+                        m_shooterSubsystem.setAngleCommand(kShootAngle),
+                        m_intakeAndSorter.getAllColoursCommand()
+                ));
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.A)
+                .whileHeld(m_intakeAndSorter.intakeCommand());
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.X)
+                .whileHeld(m_intakeSubsystem.reverseCommand());
+        m_driveGamepad.getGamepadButton(GamepadKeys.Button.B)
+                .whenPressed(new SequentialCommandGroup(
+                        new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(true), false)),
+                        m_shooterSubsystem.setAngleCommand(10)
+                ))
+                .whenReleased(new SequentialCommandGroup(
+                        m_shooterSubsystem.setAngleCommand(kShootAngle),
+                        m_intakeAndSorter.getAllColoursCommand()
+                ));
 
-        m_opGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
-                .whenPressed(m_intakeAndSorter.getAllColoursCommand());
-        m_opGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(() -> {
-                    m_shooterSubsystem.setGoalVelocityMultiplier(m_shooterSubsystem.getGoalVelocityMultiplier() + 0.05);
+                    m_shooterSubsystem.setGoalVelocityMultiplier(m_shooterSubsystem.getGoalVelocityMultiplier() + 0.025);
+                }));
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(new InstantCommand(() -> {
+                    m_shooterSubsystem.setGoalVelocityMultiplier(m_shooterSubsystem.getGoalVelocityMultiplier() - 0.025);
+                }));
+
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(new SelectCommand(() -> {
+                    double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
+                    if (Double.isNaN(range)) range = kDefaultRange;
+                    return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, range, kShootAngle, false); // TODO: adjust angle
                 }));
         m_opGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(new InstantCommand(() -> {
-                    m_shooterSubsystem.setGoalVelocityMultiplier(m_shooterSubsystem.getGoalVelocityMultiplier() - 0.05);
-                }));
-
-        m_opGamepad.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(new SelectCommand(() -> {
                     double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
-                    if (!Double.isNaN(range))
-                        return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, range, 60, false); // TODO: adjust angle
-                    else return new InstantCommand(() -> {
-                    }); // no-op
+                    if (Double.isNaN(range)) range = kDefaultRange;
+                    return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, range, kShootAngle, false); // TODO: adjust angle
                 }));
-        m_opGamepad.getGamepadButton(GamepadKeys.Button.X)
-                .whenPressed(new SelectCommand(() -> {
-                    double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
-                    if (!Double.isNaN(range))
-                        return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, range, 60, false); // TODO: adjust angle
-                    else return new InstantCommand(() -> {
-                    }); // no-op
-                }));
-        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
                 .whenPressed(
                         new SelectCommand(
-                                () -> m_shooterSubsystem.shootCommand(5, 60)
+                                () -> m_shooterSubsystem.shootCommand(2.08, kShootAngle)
                         )
                 );
         // NOTE: distance is in metres
@@ -152,6 +169,13 @@ public abstract class DriveOpMode extends CommandOpMode {
 //        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
 //                .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.PURPLE, m_shootVelocity, 60)));
 
-        m_intakeAndSorter.getAllColoursCommand().schedule(false); // initialise occupancy
+        schedule(
+                new SequentialCommandGroup(
+                        m_sorterSubsystem.setSorterAngleCommand(0, false),
+                        new WaitCommand((long) ((60 / SorterSubsystem.LEVER_SERVO_SPEED) * (300.0 / 360))), // wait for the longest period needed
+                        m_intakeAndSorter.getAllColoursCommand()
+                ),
+                m_liftSubsystem.retractCommand()
+        );
     }
 }
