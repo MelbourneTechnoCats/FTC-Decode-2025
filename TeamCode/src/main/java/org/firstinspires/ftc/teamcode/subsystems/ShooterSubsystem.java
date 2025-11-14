@@ -61,8 +61,8 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double kShooterWheelInertia = 6.481E-5;// in kg.m^2
 
     // NOTE: available from wheel velocity regression
-    private static final double kShooterWheelEfficiency = 0.7148; // a
-    private static final double kShooterWheelOffset = -33.607; // b (rad/s)
+    private static final double kShooterWheelEfficiency = 0.7; // a
+    private static final double kShooterWheelOffset = -557.143 / 60 * 2 * Math.PI; // b (rad/s)
 
     private static final double kArtifactMass = 84.75 / 1000; // in kg
 
@@ -94,7 +94,7 @@ public class ShooterSubsystem extends SubsystemBase {
         m_telemetry = telemetry;
         m_intakeAndSorter = intakeAndSorter;
     }
-    private double m_goalVelocityMultiplier = 1.80; // TODO: tune this
+    private double m_goalVelocityMultiplier = 2.65; // TODO: tune this
 
     public double getGoalVelocity(double targetX, double targetY, double angle) {
         angle = Math.toRadians(angle);
@@ -229,5 +229,13 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void setGoalVelocityMultiplier(double value) {
         m_goalVelocityMultiplier = value;
+    }
+
+    public double getLeftVelocity() {
+        return m_leftMotor.getVelocity();
+    }
+
+    public double getRightVelocity() {
+        return m_rightMotor.getVelocity();
     }
 }
