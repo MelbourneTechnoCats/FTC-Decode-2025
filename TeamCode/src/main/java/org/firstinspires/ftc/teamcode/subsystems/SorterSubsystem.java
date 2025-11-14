@@ -45,7 +45,7 @@ public class SorterSubsystem extends SubsystemBase {
     static final double SENSOR_WAIT_TIME = 200; // in ms
     private NormalizedColorSensor m_colourSensor;
 
-    private static float COLOUR_SENSOR_GAIN = 21;
+    private static float COLOUR_SENSOR_GAIN = 17.53F;
 
     public static double LEVER_SERVO_SPEED = 100; // GoBilda Dual Mode Speed servo no-load speed @ 6.0V
     public static double SORTER_SERVO_SPEED = 40; // GoBilda Dual Mode Torque servo no-load speed @ 6.0V
