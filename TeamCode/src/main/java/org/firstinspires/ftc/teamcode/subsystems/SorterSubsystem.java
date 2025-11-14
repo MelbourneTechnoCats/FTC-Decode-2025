@@ -67,26 +67,26 @@ public class SorterSubsystem extends SubsystemBase {
         m_colourSensor.setGain(COLOUR_SENSOR_GAIN);
         m_hardwareMap = hardwareMap;
 
-        setDefaultCommand(new RunCommand(() -> {
-            if (!toIntake) {
-                /* not facing intake - a compartment is facing the colour sensor, so we can read it now */
-                int readingCompartment = 0;
-                switch (currentCompartment) {
-                    case 0:
-                        readingCompartment = 1;
-                        break;
-                    case 1:
-                        readingCompartment = 2;
-                        break;
-                    case 2:
-                        readingCompartment = 0;
-                        break;
-                    default:
-                        break;
-                }
-                occupancy[readingCompartment] = getColour();
-            }
-        }, this));
+//        setDefaultCommand(new RunCommand(() -> {
+//            if (!toIntake) {
+//                /* not facing intake - a compartment is facing the colour sensor, so we can read it now */
+//                int readingCompartment = 0;
+//                switch (currentCompartment) {
+//                    case 0:
+//                        readingCompartment = 1;
+//                        break;
+//                    case 1:
+//                        readingCompartment = 2;
+//                        break;
+//                    case 2:
+//                        readingCompartment = 0;
+//                        break;
+//                    default:
+//                        break;
+//                }
+//                occupancy[readingCompartment] = getColour();
+//            }
+//        }, this));
     }
 
     public Command getColourCommand(int compartment) {
