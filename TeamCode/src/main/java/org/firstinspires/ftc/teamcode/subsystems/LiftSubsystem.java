@@ -17,7 +17,7 @@ public class LiftSubsystem extends SubsystemBase {
 
     /* TODO: verify positions, gear ratios and directions */
 
-    private static final double kLeftGearRatio = (double) 80 / 12;
+    private static final double kLeftGearRatio = (double) 80 / 15;
     private static final double kRightGearRatio = (double) 80 / 15;
 
     private static final double kServoPositionPadding = 5;
