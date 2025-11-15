@@ -51,7 +51,7 @@ public abstract class DriveOpMode extends CommandOpMode {
 
     public static double m_shootVelocity = 3000;
 
-    private static final double kShootAngle = 75;
+    private static double m_shootAngle = 75;
     private static final double kDefaultRange = 1.80;
 
     public void initialize(boolean blue) {
@@ -98,6 +98,7 @@ public abstract class DriveOpMode extends CommandOpMode {
                             .addData("2", m_sorterSubsystem.occupancy[2]);
 
                     telemetry.addData("Goal velocity multiplier", m_shooterSubsystem.getGoalVelocityMultiplier());
+                    telemetry.addData("Shooting angle", m_shootAngle);
                 }, m_driveSubsystem
         ));
 
@@ -112,10 +113,10 @@ public abstract class DriveOpMode extends CommandOpMode {
 
         Command manualFeedCommand = new SequentialCommandGroup(
                 new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(false), false)),
-                m_shooterSubsystem.setAngleCommand(10)
+                m_shooterSubsystem.setAngleCommand(25)
         );
         Command resetSorterCommand = new SequentialCommandGroup(
-                m_shooterSubsystem.setAngleCommand(kShootAngle),
+                new SelectCommand(() -> m_shooterSubsystem.setAngleCommand(m_shootAngle)),
                 m_intakeAndSorter.getAllColoursCommand()
         );
         m_opGamepad.getGamepadButton(GamepadKeys.Button.A)
@@ -146,22 +147,27 @@ public abstract class DriveOpMode extends CommandOpMode {
                 .whenPressed(new SelectCommand(() -> {
                     double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
                     if (Double.isNaN(range)) range = kDefaultRange;
-                    return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, range, kShootAngle, false); // TODO: adjust angle
+                    return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, range, m_shootAngle, false); // TODO: adjust angle
                 }));
         m_opGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(new SelectCommand(() -> {
                     double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
                     if (Double.isNaN(range)) range = kDefaultRange;
-                    return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, range, kShootAngle, false); // TODO: adjust angle
+                    return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, range, m_shootAngle, false); // TODO: adjust angle
                 }));
-        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-                .whenPressed(
-                        new SelectCommand(
-                                () -> m_shooterSubsystem.shootCommand(2.08, kShootAngle)
-                        )
-                );
         // NOTE: distance is in metres
 
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+                .whenPressed(
+                        new InstantCommand(() -> { m_shootAngle += 5.0; })
+                                .andThen(new SelectCommand(() -> m_shooterSubsystem.setAngleCommand(m_shootAngle)))
+                );
+
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(
+                        new InstantCommand(() -> { m_shootAngle -= 5.0; })
+                                .andThen(new SelectCommand(() -> m_shooterSubsystem.setAngleCommand(m_shootAngle)))
+                );
 
 //        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
 //                .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.PURPLE, m_shootVelocity, 60)));
@@ -173,7 +179,7 @@ public abstract class DriveOpMode extends CommandOpMode {
                                         m_sorterSubsystem.setSorterAngleCommand(0, false),
                                         new WaitCommand((long) ((60 / SorterSubsystem.LEVER_SERVO_SPEED) * (300.0 / 360))) // wait for the longest period needed
                                 ),
-                                m_shooterSubsystem.setAngleCommand(kShootAngle)
+                                m_shooterSubsystem.setAngleCommand(m_shootAngle)
                         ),
                         m_intakeAndSorter.getAllColoursCommand()
                 ),
