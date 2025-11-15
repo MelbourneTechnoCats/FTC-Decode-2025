@@ -69,8 +69,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double kCoeffA = kShooterWheelInertia * (kShooterWheelEfficiency * kShooterWheelEfficiency - 1);
     private static final double kCoeffB = kShooterWheelInertia * 2 * kShooterWheelEfficiency * kShooterWheelOffset;
 
-    private static final long kRampWaitTime = 100; // extra time to wait for motor to ramp up
-    private static final long kLoadWaitTime = 100; // extra time to wait for the ball to be shot
+    private static final long kRampWaitTime = 400; // extra time to wait for motor to ramp up
 
     private static double kServoSpeed = 50; // GoBilda Dual Mode Torque servo no-load speed @ 6.0V
 
@@ -148,8 +147,7 @@ public class ShooterSubsystem extends SubsystemBase {
                         new SequentialCommandGroup(
                                 new WaitUntilCommand(this::isVelocityReached),
                                 new WaitCommand(kRampWaitTime),
-                                m_intakeAndSorter.loadIntoShooterCommand(colour, strict),
-                                new WaitCommand(kLoadWaitTime)
+                                m_intakeAndSorter.loadIntoShooterCommand(colour, strict)
                         )
                 );
     }
@@ -164,8 +162,7 @@ public class ShooterSubsystem extends SubsystemBase {
                         new SequentialCommandGroup(
                                 new WaitUntilCommand(this::isVelocityReached),
                                 new WaitCommand(kRampWaitTime),
-                                m_intakeAndSorter.loadIntoShooterCommand(position),
-                                new WaitCommand(kLoadWaitTime)
+                                m_intakeAndSorter.loadIntoShooterCommand(position)
                         )
                 );
     }
@@ -176,8 +173,7 @@ public class ShooterSubsystem extends SubsystemBase {
                         new SequentialCommandGroup(
                                 new WaitUntilCommand(this::isVelocityReached),
                                 new WaitCommand(kRampWaitTime),
-                                m_intakeAndSorter.loadIntoShooterCommand(), // any colour
-                                new WaitCommand(kLoadWaitTime)
+                                m_intakeAndSorter.loadIntoShooterCommand() // any colour
                         )
                 );
     }

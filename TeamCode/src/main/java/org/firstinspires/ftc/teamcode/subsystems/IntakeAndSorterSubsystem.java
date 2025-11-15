@@ -5,6 +5,7 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.command.WaitCommand;
 
 import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup;
 
@@ -117,6 +118,8 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
         });
     }
 
+    private static final long kLoadWaitTime = 0; // extra time to wait for the ball to be shot
+
     public Command loadIntoShooterCommand(int position) { // by position
         return setSorterAngleCommand(position, false)
                 .andThen(
@@ -125,6 +128,7 @@ public class IntakeAndSorterSubsystem extends SubsystemBase {
                                     m_sorter.occupancy[position] = SorterSubsystem.Colour.NONE;
                                 }))
                 )
+                .andThen(new WaitCommand(kLoadWaitTime))
                 .andThen(m_sorter.setLeverAngleCommand(true));
     }
 
