@@ -82,6 +82,7 @@ public class VisionSubsystem extends SubsystemBase {
         double meanX = 0, meanY = 0, meanEndX = 0, meanEndY = 0;
         int numPoints = 0;
         for (AprilTagDetection detection : detections) {
+            if (detection == null || detection.metadata == null || detection.metadata.name == null) continue;
             if (!detection.metadata.name.contains("Obelisk")) {
                 Position pos = detection.robotPose.getPosition();
                 meanX += pos.x; meanY += pos.y;
