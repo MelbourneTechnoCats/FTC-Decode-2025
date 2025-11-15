@@ -4,6 +4,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.ParallelRaceGroup;
 import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.command.WaitCommand;
@@ -99,9 +100,9 @@ public class RedFarAutoOpMode extends CommandOpMode {
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
 
         /* initial artifact positions in the sorter */
-        m_sorterSubsystem.occupancy[0] = SorterSubsystem.Colour.PURPLE;
-        m_sorterSubsystem.occupancy[1] = SorterSubsystem.Colour.PURPLE;
-        m_sorterSubsystem.occupancy[2] = SorterSubsystem.Colour.GREEN;
+//        m_sorterSubsystem.occupancy[0] = SorterSubsystem.Colour.PURPLE;
+//        m_sorterSubsystem.occupancy[1] = SorterSubsystem.Colour.PURPLE;
+//        m_sorterSubsystem.occupancy[2] = SorterSubsystem.Colour.GREEN;
 
         Command shootPurpleCommand = m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, SHOOT_DISTANCE, SHOOT_ANGLE);
         Command shootGreenCommand = m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, SHOOT_DISTANCE, SHOOT_ANGLE);
@@ -117,11 +118,14 @@ public class RedFarAutoOpMode extends CommandOpMode {
         );
 
         Command autoCommand =
-                m_driveSubsystem.action2Command(
-                        m_driveSubsystem.m_drive.actionBuilder(initialPose)
-                                .strafeTo(new Vector2d(SHOOT_X, SHOOT_Y))
-                                .turnTo(Math.toRadians(-30))
-                                .build()
+                new ParallelCommandGroup(
+                        m_driveSubsystem.action2Command(
+                                m_driveSubsystem.m_drive.actionBuilder(initialPose)
+                                        .strafeTo(new Vector2d(SHOOT_X, SHOOT_Y))
+                                        .turnTo(Math.toRadians(-30))
+                                        .build()
+                        ),
+                        m_intakeAndSorter.getAllColoursCommand()
                 ).andThen(
                         new ParallelRaceGroup(
                                 new WaitUntilCommand(() -> {
@@ -151,6 +155,6 @@ public class RedFarAutoOpMode extends CommandOpMode {
                     );
                 }));
 
-        autoCommand.schedule();
+        schedule(autoCommand);
     }
 }
