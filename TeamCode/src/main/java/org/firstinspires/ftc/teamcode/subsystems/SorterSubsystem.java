@@ -58,7 +58,7 @@ public class SorterSubsystem extends SubsystemBase {
     static final Integer[] LEVER_ANGLE_ORDER = new ArrayIndexComparator<>(LEVER_ANGLES).getSortedIndices();
 
     static final Double[] READ_COLOUR_ANGLES = new Double[]{C2_LEVER_ANGLE, C0_LEVER_ANGLE, C1_LEVER_ANGLE};
-    static final Integer[] READ_COLOUR_ANGLE_ORDER = new ArrayIndexComparator<>(LEVER_ANGLES).getSortedIndices();
+    static final Integer[] READ_COLOUR_ANGLE_ORDER = new ArrayIndexComparator<>(READ_COLOUR_ANGLES).getSortedIndices();
 
     public SorterSubsystem(HardwareMap hardwareMap) {
         m_leverServo = new ServoSubsystem(hardwareMap, "leverServo", LEVER_SERVO_SPEED, MIN_ANGLE, MAX_ANGLE);

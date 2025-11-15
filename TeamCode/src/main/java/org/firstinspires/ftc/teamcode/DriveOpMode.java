@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
@@ -109,32 +110,28 @@ public abstract class DriveOpMode extends CommandOpMode {
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(m_liftSubsystem.extendCommand());
 
+        Command manualFeedCommand = new SequentialCommandGroup(
+                new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(false), false)),
+                m_shooterSubsystem.setAngleCommand(10)
+        );
+        Command resetSorterCommand = new SequentialCommandGroup(
+                m_shooterSubsystem.setAngleCommand(kShootAngle),
+                m_intakeAndSorter.getAllColoursCommand()
+        );
         m_opGamepad.getGamepadButton(GamepadKeys.Button.A)
                 .whileHeld(m_intakeAndSorter.intakeCommand());
         m_opGamepad.getGamepadButton(GamepadKeys.Button.X)
                 .whileHeld(m_intakeSubsystem.reverseCommand());
         m_opGamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenPressed(new SequentialCommandGroup(
-                        new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(true), false)),
-                        m_shooterSubsystem.setAngleCommand(10)
-                ))
-                .whenReleased(new SequentialCommandGroup(
-                        m_shooterSubsystem.setAngleCommand(kShootAngle),
-                        m_intakeAndSorter.getAllColoursCommand()
-                ));
+                .whenPressed(manualFeedCommand)
+                .whenReleased(resetSorterCommand);
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.A)
                 .whileHeld(m_intakeAndSorter.intakeCommand());
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.X)
                 .whileHeld(m_intakeSubsystem.reverseCommand());
         m_driveGamepad.getGamepadButton(GamepadKeys.Button.B)
-                .whenPressed(new SequentialCommandGroup(
-                        new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(true), false)),
-                        m_shooterSubsystem.setAngleCommand(10)
-                ))
-                .whenReleased(new SequentialCommandGroup(
-                        m_shooterSubsystem.setAngleCommand(kShootAngle),
-                        m_intakeAndSorter.getAllColoursCommand()
-                ));
+                .whenPressed(manualFeedCommand)
+                .whenReleased(resetSorterCommand);
 
         m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(() -> {
@@ -171,8 +168,13 @@ public abstract class DriveOpMode extends CommandOpMode {
 
         schedule(
                 new SequentialCommandGroup(
-                        m_sorterSubsystem.setSorterAngleCommand(0, false),
-                        new WaitCommand((long) ((60 / SorterSubsystem.LEVER_SERVO_SPEED) * (300.0 / 360))), // wait for the longest period needed
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        m_sorterSubsystem.setSorterAngleCommand(0, false),
+                                        new WaitCommand((long) ((60 / SorterSubsystem.LEVER_SERVO_SPEED) * (300.0 / 360))) // wait for the longest period needed
+                                ),
+                                m_shooterSubsystem.setAngleCommand(kShootAngle)
+                        ),
                         m_intakeAndSorter.getAllColoursCommand()
                 ),
                 m_liftSubsystem.retractCommand()
