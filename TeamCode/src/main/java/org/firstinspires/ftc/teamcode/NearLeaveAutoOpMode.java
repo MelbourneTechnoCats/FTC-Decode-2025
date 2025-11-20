@@ -5,6 +5,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.ParallelRaceGroup;
 import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.command.WaitCommand;
@@ -15,6 +16,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
@@ -29,6 +31,7 @@ public class NearLeaveAutoOpMode extends CommandOpMode {
     private IntakeSubsystem m_intakeSubsystem;
     private IntakeAndSorterSubsystem m_intakeAndSorter;
     private ShooterSubsystem m_shooterSubsystem;
+    private LiftSubsystem m_liftSubsystem;
 
     private static final double DISTANCE = 36;
 
@@ -40,13 +43,17 @@ public class NearLeaveAutoOpMode extends CommandOpMode {
         m_sorterSubsystem = new SorterSubsystem(hardwareMap);
         m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
         m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
+        m_liftSubsystem = new LiftSubsystem(hardwareMap);
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
 
         Command autoCommand =
-                m_driveSubsystem.action2Command(
-                        m_driveSubsystem.m_drive.actionBuilder(initialPose)
-                                .strafeTo(new Vector2d(-DISTANCE, 0))
-                                .build()
+                new ParallelCommandGroup(
+                        m_liftSubsystem.retractCommand(),
+                        m_driveSubsystem.action2Command(
+                                m_driveSubsystem.m_drive.actionBuilder(initialPose)
+                                        .strafeTo(new Vector2d(-DISTANCE, 0))
+                                        .build()
+                        )
                 );
 
         schedule(autoCommand);

@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
@@ -91,6 +92,8 @@ public class BlueFarAutoOpMode extends CommandOpMode {
         ).andThen(m_shootCommand);
     }
 
+    private LiftSubsystem m_liftSubsystem;
+
     @Override
     public void initialize() {
         m_visionSubsystem = new VisionSubsystem(hardwareMap, telemetry);
@@ -100,6 +103,7 @@ public class BlueFarAutoOpMode extends CommandOpMode {
         m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
         m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
         m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
+        m_liftSubsystem = new LiftSubsystem(hardwareMap);
 
         /* initial artifact positions in the sorter */
 //        m_sorterSubsystem.occupancy[0] = SorterSubsystem.Colour.PURPLE;
@@ -127,7 +131,8 @@ public class BlueFarAutoOpMode extends CommandOpMode {
                                         .turnTo(Math.toRadians(-30))
                                         .build()
                         ),
-                        m_intakeAndSorter.getAllColoursCommand()
+                        m_intakeAndSorter.getAllColoursCommand(),
+                        m_liftSubsystem.retractCommand()
                 ).andThen(
                         new ParallelRaceGroup(
                                 new WaitUntilCommand(() -> {
