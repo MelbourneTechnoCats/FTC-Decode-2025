@@ -51,7 +51,7 @@ public abstract class DriveOpMode extends CommandOpMode {
 
     public static double m_shootVelocity = 3000;
 
-    private static double m_shootAngle = 75;
+    private static double m_shootAngle = 50;
     private static final double kDefaultRange = 1.80;
 
     public void initialize(boolean blue) {
@@ -167,6 +167,26 @@ public abstract class DriveOpMode extends CommandOpMode {
                 .whenPressed(
                         new InstantCommand(() -> { m_shootAngle -= 5.0; })
                                 .andThen(new SelectCommand(() -> m_shooterSubsystem.setAngleCommand(m_shootAngle)))
+                );
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
+                .whenPressed(
+                        new SelectCommand(() -> {
+                            int compartment = m_sorterSubsystem.getCurrentCompartment() - 1;
+                            if (compartment < 0) compartment = 2;
+                            double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
+                            if (Double.isNaN(range)) range = kDefaultRange;
+                            return m_shooterSubsystem.shootCommand(compartment, range, m_shootAngle);
+                        })
+                );
+        m_opGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
+                .whenPressed(
+                        new SelectCommand(() -> {
+                            int compartment = m_sorterSubsystem.getCurrentCompartment() + 1;
+                            if (compartment > 2) compartment = 0;
+                            double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
+                            if (Double.isNaN(range)) range = kDefaultRange;
+                            return m_shooterSubsystem.shootCommand(compartment, range, m_shootAngle);
+                        })
                 );
 
 //        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
