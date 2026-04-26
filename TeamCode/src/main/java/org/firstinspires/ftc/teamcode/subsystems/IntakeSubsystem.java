@@ -23,7 +23,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public IntakeSubsystem(final HardwareMap hardwareMap, Telemetry telemetry) {
         _motor = new MotorEx(hardwareMap,"intakeMotor");
         _telemetry = telemetry;
-        _distSensor = hardwareMap.get(DistanceSensor.class, "intakeSensor");
+//        _distSensor = hardwareMap.get(DistanceSensor.class, "intakeSensor");
     }
 
     public void runMotor() {
@@ -55,7 +55,7 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public double getSensorDistance() {
-        return _distSensor.getDistance(DistanceUnit.CM);
+        return _distSensor != null ? _distSensor.getDistance(DistanceUnit.CM) : Double.POSITIVE_INFINITY;
     }
 
     public boolean isBallThere(){

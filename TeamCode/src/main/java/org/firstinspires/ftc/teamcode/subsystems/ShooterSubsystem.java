@@ -166,6 +166,23 @@ public class ShooterSubsystem extends SubsystemBase {
                         )
                 );
     }
+    /**
+     * Runs the shooter at the given velocity (and angle) for a fixed amount
+     * of time, then stops both motors.
+     *
+     * @param angle    shooter angle in degrees
+     * @param velocity target wheel velocity in RPM
+     */
+    public Command timedRunCommand(double angle, double velocity) {
+        return new SequentialCommandGroup(
+                // spin up and hold velocity
+                runCommand(angle, velocity),
+                // wait for fixed duration
+                new WaitCommand(500),
+                // then stop motors
+                stopCommand()
+        );
+    }
 
     public Command shootCommandWithVelocity(double velocity, double angle) {
         return runCommand(angle, velocity)

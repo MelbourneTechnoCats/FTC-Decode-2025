@@ -21,6 +21,8 @@ public class DriveSubsystem extends SubsystemBase {
     public static final double DEPTH = 18;
 
     private double m_xSpeed = 0, m_ySpeed = 0, m_rotSpeed = 0;
+    private com.arcrobotics.ftclib.geometry.Vector2d m_fieldVelocity = new com.arcrobotics.ftclib.geometry.Vector2d(0, 0);
+
     private boolean m_fieldCentric = false;
 
     private VisionSubsystem m_vision;
@@ -58,7 +60,7 @@ public class DriveSubsystem extends SubsystemBase {
             linearVelocity = linearVelocity.rotateBy(-heading.getDegrees());
         }
 
-        m_drive.setDrivePowers(
+         m_drive.setDrivePowers(
                 new PoseVelocity2d(
                         new com.acmerobotics.roadrunner.Vector2d(
                                 linearVelocity.getY(), -linearVelocity.getX()
@@ -66,7 +68,11 @@ public class DriveSubsystem extends SubsystemBase {
                         m_rotSpeed
                 )
         );
-        m_drive.updatePoseEstimate();
+        // Update pose estimate and cache field-relative linear velocity
+        PoseVelocity2d rrVel = m_drive.updatePoseEstimate();
+        // rrVel is in field frame already
+        m_fieldVelocity = new com.arcrobotics.ftclib.geometry.Vector2d(rrVel.linearVel.x, rrVel.linearVel.y);
+
     }
 
     /* set velocity to run the drivetrain at (xSpeed and ySpeed in m/s, rotSpeed in rad/s */
@@ -77,7 +83,9 @@ public class DriveSubsystem extends SubsystemBase {
         m_rotSpeed = rotSpeed;
         m_fieldCentric = fieldCentric;
     }
-
+    public com.arcrobotics.ftclib.geometry.Vector2d getFieldVelocity() {
+        return m_fieldVelocity;
+    }
     /* get the drivetrain's heading */
     public Rotation2d getHeading() {
         double heading = m_drive.localizer.getPose().heading.toDouble(); // in radians
