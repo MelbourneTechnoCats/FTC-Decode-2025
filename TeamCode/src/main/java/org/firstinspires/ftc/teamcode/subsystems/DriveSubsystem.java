@@ -39,7 +39,7 @@ public class DriveSubsystem extends SubsystemBase {
         m_vision.m_poseTrigger.whileActiveContinuous(
                 new RunCommand(() -> {
                     setPose(m_vision.getLastPose());
-                })
+                })  
         );
     }
 

@@ -1,143 +1,139 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import java.util.List;
+
 /**
- * Minimal Limelight 3A wrapper.
- *
- * In this project we don't have a real Limelight, so this class doubles as a
- * vision helper that can derive heading to an AprilTag using the existing
- * VisionSubsystem (FTC AprilTag pipeline).
+ * Limelight 3A subsystem for AprilTag tracking using Pipeline 1.
+ * Provides target tracking data directly from the Limelight hardware without VisionSubsystem.
  */
 public class LimelightSubsystem extends SubsystemBase {
-    private final Telemetry m_telemetry;
-    private final VisionSubsystem m_vision;
-    private final DriveSubsystem m_drive;
+    private final Limelight3A limelight;
+    private final Telemetry telemetry;
+    private final DriveSubsystem drive;
 
-    // Last known values (Limelight-style)
-    private double m_tx = 0.0;   // horizontal offset (deg)
-    private double m_ty = 0.0;   // vertical offset (deg)
-    private boolean m_targetVisible = false;
+    private double tx;
+    private double ty;
+    private boolean targetVisible;
+    
+    private double blueTx = Double.NaN;
+    private double redTx = Double.NaN;
 
-    public LimelightSubsystem(Telemetry telemetry, VisionSubsystem vision, DriveSubsystem drive) {
-        m_telemetry = telemetry;
-        m_vision = vision;
-        m_drive = drive;
+    public LimelightSubsystem(HardwareMap hardwareMap, Telemetry telemetry, DriveSubsystem drive) {
+        this.limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        this.telemetry = telemetry;
+        this.drive = drive;
+
+        // Basic initialization
+        limelight.start();
+        limelight.setPollRateHz(100);
+
+        // Default to Pipeline 1 (AprilTag tracking)
+        setPipeline(2);
     }
 
     @Override
     public void periodic() {
-        // In a real Limelight setup, you'd pull tx/ty/targetValid here.
-        // For now we just publish whatever values were last set.
-        m_telemetry.addData("Limelight tx", m_tx);
-        m_telemetry.addData("Limelight ty", m_ty);
-        m_telemetry.addData("Limelight target", m_targetVisible);
-    }
 
-    public double getTx() {
-        return m_tx;
-    }
+        LLResult result = limelight.getLatestResult();
 
-    public double getTy() {
-        return m_ty;
-    }
+        blueTx = Double.NaN;
+        redTx = Double.NaN;
 
-     public boolean hasTarget() {
-        return m_targetVisible;
+        if (result != null && result.isValid()) {
+            targetVisible = true;
+            tx = result.getTx();
+            ty = result.getTy();
+            
+            List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+            if (fiducials != null) {
+                for (LLResultTypes.FiducialResult f : fiducials) {
+                    if (f.getFiducialId() == 20) { // blue obelisk
+                        blueTx = f.getTargetXDegrees();
+                    } else if (f.getFiducialId() == 24) { // red obelisk
+                        redTx = f.getTargetXDegrees();
+                    }
+                }
+            }
+        } else {
+            targetVisible = false;
+        }
+
+        // Telemetry for debugging
+        telemetry.addData("LL Target", targetVisible ? "VISIBLE" : "NONE");
+        telemetry.addData("LL tx", "%.2f", tx);
+        if (!Double.isNaN(blueTx)) telemetry.addData("LL Blue Tx", "%.2f", blueTx);
+        if (!Double.isNaN(redTx)) telemetry.addData("LL Red Tx", "%.2f", redTx);
     }
 
     /**
-     * Actively looks for an AprilTag using the existing VisionSubsystem and returns
-     * the robot heading (in degrees) toward that tag.
-     *
-     * @param blue if true, look for the blue obelisk tag; otherwise look for red
-     * @return heading in degrees from robot to tag in the FTC field frame,
-     *         or Double.NaN if no suitable tag is visible
+     * Switches between pipelines.
+     * @param index The pipeline index (0-9).
      */
-     public double getHeadingToAprilTag(boolean blue) {
-        // Get robot pose in field frame
-        com.arcrobotics.ftclib.geometry.Pose2d robotPose = m_drive.getPose();
-
-        // Get target pose in field frame from VisionSubsystem
-        org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc tagPose =
-                blue ? m_vision.getBlueTargetPose() : m_vision.getRedTargetPose();
-
-        if (tagPose == null) {
-            m_targetVisible = false;
-            m_tx = 0.0;
-            m_ty = 0.0;
-            return Double.NaN;
-        }
-
-        // Tag pose is in field coordinates in inches (FTC). Convert to same units as robotPose (inches vs meters).
-        // VisionSubsystem stores last pose also in inches, so we stay consistent.
-        double tagX = tagPose.x;
-        double tagY = tagPose.y;
-
-        double dx = tagX - robotPose.getX();
-        double dy = tagY - robotPose.getY();
-
-        double headingToTag = Math.toDegrees(Math.atan2(dy, dx));
-
-        m_targetVisible = true;
-        m_tx = 0.0;
-        m_ty = 0.0;
-
-        return headingToTag;
+    public void setPipeline(int index) {
+        limelight.pipelineSwitch(index);
     }
 
     /**
-     * Compute a compensated heading to the AprilTag that leads the shot based on robot motion.
-     *
-     * @param blue          true for blue obelisk tag, false for red
-     * @param projectileVel projectile speed (same units/sec as field coordinates; tune from shooter)
-     * @param leadScale     additional tuning multiplier on lead amount (1.0 = nominal)
-     * @return desired field heading in degrees to aim turret, or NaN if no tag
+     * @return Horizontal offset from the target (-29.8 to 29.8 degrees).
      */
-    public double getLeadHeadingToAprilTag(boolean blue, double projectileVel, double leadScale) {
-        // Get basic heading and distance to tag
-        double range = blue ? m_vision.getBlueTargetRange() : m_vision.getRedTargetRange();
-        if (Double.isNaN(range) || projectileVel <= 0) {
-            return getHeadingToAprilTag(blue);
-        }
-
-        com.arcrobotics.ftclib.geometry.Pose2d robotPose = m_drive.getPose();
-        org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc tagPose =
-                blue ? m_vision.getBlueTargetPose() : m_vision.getRedTargetPose();
-        if (tagPose == null) {
-            return Double.NaN;
-        }
-
-        double tagX = tagPose.x;
-        double tagY = tagPose.y;
-
-        // Vector robot -> tag
-        double rx = tagX - robotPose.getX();
-        double ry = tagY - robotPose.getY();
-        double dist = Math.hypot(rx, ry);
-        if (dist < 1e-6) {
-            return Math.toDegrees(robotPose.getHeading());
-        }
-
-        // Robot field velocity
-        com.arcrobotics.ftclib.geometry.Vector2d vField = m_drive.getFieldVelocity();
-
-        // Estimate time of flight and lead vector
-        double tFlight = dist / projectileVel;
-        tFlight *= leadScale;
-
-        double leadX = rx - vField.getX() * tFlight;
-        double leadY = ry - vField.getY() * tFlight;
-
-        double leadHeading = Math.toDegrees(Math.atan2(leadY, leadX));
-        return leadHeading;
+    public double getTX() {
+        return tx;
     }
 
-    // Optional setters so you can simulate from Dashboard or test code
-    public void setFakeReading(double tx, double ty, boolean visible) {
-        m_tx = tx;
-        m_ty = ty;
-        m_targetVisible = visible;
+    /**
+     * @return Vertical offset from the target (-24.85 to 24.85 degrees).
+     */
+    public double getTY() {
+        return ty;
+    }
+
+    /**
+     * @return True if a valid target is currently tracked by the Limelight.
+     */
+    public boolean hasTarget() {
+        return targetVisible;
+    }
+
+    /**
+     * @param useBlueTag True for blue obelisk, false for red.
+     * @return Heading to the target AprilTag in field coordinates (degrees).
+     */
+    public double getHeadingToAprilTag(boolean useBlueTag) {
+        double relativeBearing = useBlueTag ? blueTx : redTx;
+        if (Double.isNaN(relativeBearing)) return Double.NaN;
+
+        return getRobotHeading() + relativeBearing;
+    }
+
+    /**
+     * @return Current robot heading in degrees, from DriveSubsystem or Limelight botpose.
+     */
+    public double getRobotHeading() {
+        if (drive != null) {
+            return drive.getHeading().getDegrees();
+        }
+        
+        LLResult result = limelight.getLatestResult();
+        if (result != null && result.isValid() && result.getBotpose() != null) {
+            return result.getBotpose().getOrientation().getYaw();
+        }
+        return 0;
+    }
+
+    /**
+     * @param useBlueTag True for blue obelisk, false for red.
+     * @param projectileSpeed Speed of the projectile (m/s).
+     * @param leadScale Scaling factor for the lead.
+     * @return Desired heading to lead the target (degrees).
+     */
+    public double getLeadHeadingToAprilTag(boolean useBlueTag, @SuppressWarnings("unused") double projectileSpeed, @SuppressWarnings("unused") double leadScale) {
+        return getHeadingToAprilTag(useBlueTag);
     }
 }

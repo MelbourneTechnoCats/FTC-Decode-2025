@@ -178,6 +178,10 @@ public class MotorSubsystem extends SubsystemBase {
     public void setInverted(boolean inverted) {
         m_motor.setInverted(inverted);
     }
+    public void setRawPower(double power) {
+        m_targetVelocity = Double.NaN;
+        m_motor.set(power);
+    }
 
     public double getVelocityTolerance() {
         return m_velTolerance;

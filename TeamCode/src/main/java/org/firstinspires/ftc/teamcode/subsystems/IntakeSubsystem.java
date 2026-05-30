@@ -5,66 +5,106 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.StartEndCommand;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+/**
+ * Intake subsystem with two independent motors and no sensors.
+ *
+ * "Left" and "Right" are just logical names; map them to your actual
+ * config names in the constructor.
+ */
 public class IntakeSubsystem extends SubsystemBase {
-    private MotorEx _motor;
+    private final MotorEx m_leftMotor;
+    private final MotorEx m_rightMotor;
 
-    private Telemetry _telemetry;
-
-    private final double BALL_DISTANCE = 10;
-    private DistanceSensor _distSensor;
-
+    private final Telemetry m_telemetry;
 
     public IntakeSubsystem(final HardwareMap hardwareMap, Telemetry telemetry) {
-        _motor = new MotorEx(hardwareMap,"intakeMotor");
-        _telemetry = telemetry;
-//        _distSensor = hardwareMap.get(DistanceSensor.class, "intakeSensor");
+        // TODO: change these strings to match your configuration
+        m_leftMotor = new MotorEx(hardwareMap, "leftIntakeMotor");
+        m_rightMotor = new MotorEx(hardwareMap, "rightIntakeMotor");
+        m_telemetry = telemetry;
     }
 
-    public void runMotor() {
-        _motor.set(-1.0);
+    // ---- Raw motor control helpers ----
+
+    public void setLeftPower(double power) {
+        m_leftMotor.set(power);
     }
 
-    public void reverseMotor() {
-        _motor.set(1.0);
+    public void setRightPower(double power) {
+        m_rightMotor.set(power);
     }
 
-    public void stopMotor() {
-        _motor.set(0);
+    public void stopLeft() {
+        m_leftMotor.set(0);
     }
 
-    public Command runCommand()
-    {
+    public void stopRight() {
+        m_rightMotor.set(0);
+    }
+
+    public void stopBoth() {
+        m_leftMotor.set(0);
+        m_rightMotor.set(0);
+    }
+
+    // ---- Simple “both together” helpers (same behavior as old class) ----
+
+    /** Run both intake motors to pull game pieces in (tune directions as needed). */
+    public void intakeBoth() {
+        m_leftMotor.set(-1.0);
+        m_rightMotor.set(-1.0);
+    }
+
+    /** Run both intake motors to eject game pieces. */
+    public void outtakeBoth() {
+        m_leftMotor.set(1.0);
+        m_rightMotor.set(1.0);
+    }
+
+    // ---- Commands ----
+
+    /** Run both motors inward while this command is scheduled. */
+    public Command runCommand() {
         return new StartEndCommand(
-                this::runMotor, this::stopMotor,
+                this::intakeBoth,
+                this::stopBoth,
                 this
         );
     }
 
-    public Command reverseCommand()
-    {
+    /** Run both motors outward while this command is scheduled. */
+    public Command reverseCommand() {
         return new StartEndCommand(
-                this::reverseMotor, this::stopMotor,
+                this::outtakeBoth,
+                this::stopBoth,
                 this
         );
     }
 
-    public double getSensorDistance() {
-        return _distSensor != null ? _distSensor.getDistance(DistanceUnit.CM) : Double.POSITIVE_INFINITY;
+    /** Stop both motors immediately. */
+    public Command stopCommand() {
+        return new InstantCommand(this::stopBoth, this);
     }
 
-    public boolean isBallThere(){
-        return getSensorDistance() < BALL_DISTANCE;
-
+    /** Run only the left intake while scheduled. */
+    public Command runLeftCommand(double power) {
+        return new StartEndCommand(
+                () -> setLeftPower(power),
+                this::stopLeft,
+                this
+        );
     }
 
-    public Command stopCommand()
-    {
-        return new InstantCommand(this::stopMotor, this);
+    /** Run only the right intake while scheduled. */
+    public Command runRightCommand(double power) {
+        return new StartEndCommand(
+                () -> setRightPower(power),
+                this::stopRight,
+                this
+        );
     }
 }
