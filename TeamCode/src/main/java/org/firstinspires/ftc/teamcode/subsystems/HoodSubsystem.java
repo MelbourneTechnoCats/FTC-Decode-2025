@@ -1,66 +1,65 @@
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+package org.firstinspires.ftc.teamcode.subsystems;
+
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
+/**
+ * Hood subsystem backed by a servo instead of a motor.
+ *
+ * Uses ServoSubsystem to move the hood to a desired angle (degrees).
+ */
+@Config
 public class HoodSubsystem {
-	private DcMotor hoodMotor;
 
-	// How many encoder ticks is "one part" (tune this)
-	private static final int STEP_TICKS = 50;
+    private final ServoSubsystem m_servo;
 
-	// Default power when moving to a position (tune this)
-	private static final double POSITION_POWER = 0.4;
+    // Hood physical range in degrees (tune these!)
+    public static double MIN_HOOD_ANGLE_DEG = 0.0;
+    public static double MAX_HOOD_ANGLE_DEG = 60.0;
 
-	public HoodSubsystem(HardwareMap hardwareMap) {
-		// Change "hoodMotor" to your actual motor name in the configuration
-		hoodMotor = hardwareMap.get(DcMotor.class, "hoodMotor");
-		hoodMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-		// Reverse direction if needed
-		// hoodMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+    // Servo speed in RPM (from datasheet; adjust if needed)
+    public static double SERVO_SPEED_RPM = 50.0;
 
-		// Encoder + position mode setup
-		hoodMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-		hoodMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-	}
+    // Step size for manual nudging
+    public static double STEP_DEG = 1.0;
 
-	public void setPower(double power) {
-		hoodMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-		hoodMotor.setPower(power);
-	}
+    public HoodSubsystem(HardwareMap hardwareMap) {
+        // "hoodServo" must be configured in the RC config as a servo
+        m_servo = new ServoSubsystem(
+                hardwareMap,
+                "hoodServo",
+                SERVO_SPEED_RPM,
+                MIN_HOOD_ANGLE_DEG,
+                MAX_HOOD_ANGLE_DEG,
+                AngleUnit.DEGREES
+        );
+    }
 
-	public void stop() {
-		hoodMotor.setPower(0);
-	}
+    /** Move hood to a specific angle in degrees (clamped to [MIN, MAX]). */
+    public void setAngle(double angleDeg) {
+        m_servo.setAngle(angleDeg, AngleUnit.DEGREES);
+    }
 
-	public DcMotor getMotor() {
-		return hoodMotor;
-	}
+    /** Current estimated hood angle in degrees. */
+    public double getCurrentAngle() {
+        return m_servo.getCurrentPosition();
+    }
 
-	// ---- NEW COMMAND-LIKE METHODS ----
+    /** Nudge hood up by STEP_DEG. */
+    public void incrementUp() {
+        double current = Double.isNaN(getCurrentAngle()) ? MIN_HOOD_ANGLE_DEG : getCurrentAngle();
+        setAngle(current + STEP_DEG);
+    }
 
-	/** Move the hood up by one step (STEP_TICKS). */
-	public void incrementUp() {
-		int currentPos = hoodMotor.getCurrentPosition();
-		int targetPos = currentPos + STEP_TICKS;
-		moveToPosition(targetPos);
-	}
+    /** Nudge hood down by STEP_DEG. */
+    public void incrementDown() {
+        double current = Double.isNaN(getCurrentAngle()) ? MIN_HOOD_ANGLE_DEG : getCurrentAngle();
+        setAngle(current - STEP_DEG);
+    }
 
-	/** Move the hood down by one step (STEP_TICKS). */
-	public void incrementDown() {
-		int currentPos = hoodMotor.getCurrentPosition();
-		int targetPos = currentPos - STEP_TICKS;
-		moveToPosition(targetPos);
-	}
-
-	/** Set an absolute position in encoder ticks. */
-	public void setPosition(int targetTicks) {
-		moveToPosition(targetTicks);
-	}
-
-	/** Internal helper for encoder-based movement. */
-	private void moveToPosition(int targetPos) {
-		hoodMotor.setTargetPosition(targetPos);
-		hoodMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-		hoodMotor.setPower(POSITION_POWER);
-	}
+    /** Stop is effectively a no-op for positional servo, but kept for API compatibility. */
+    public void stop() {
+        // nothing to do; positional servos hold last command
+    }
 }

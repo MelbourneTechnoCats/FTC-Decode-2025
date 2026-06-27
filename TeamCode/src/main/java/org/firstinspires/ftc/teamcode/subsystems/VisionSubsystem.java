@@ -4,52 +4,69 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
-import com.arcrobotics.ftclib.geometry.Vector2d;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.util.List;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
 /**
- * Vision subsystem backed directly by Limelight 3A's built‑in AprilTag pipeline.
+ * Vision subsystem backed by a Limelight 3A.
  *
- * - No VisionPortal/Webcam usage.
- * - Estimates robot pose from multiple field tags.
- * - Tracks "Obelisk" tags for motif detection.
- * - Exposes blue/red target poses & ranges.
+ * <p>Responsibilities:
+ * <ul>
+ *   <li>estimate robot pose using Limelight botpose / MegaTag2,</li>
+ *   <li>track the red and blue AprilTag targets,</li>
+ *   <li>detect the current motif from specific field tags, and</li>
+ *   <li>expose a trigger when a fresh pose estimate is available.</li>
+ * </ul>
  *
- * NOTE: All positions here are in the field coordinate system and units
- * as reported by Limelight (meters). If you need inches, convert in callers.
+ * <p>Prerequisites:
+ * <ol>
+ *   <li>Configure robot pose (LL Forward, Right, Up, Roll/Pitch/Yaw) in the Limelight web UI.</li>
+ *   <li>Upload the correct field map (Into The Deep) via the Limelight web UI.</li>
+ *   <li>Use pipeline 0, or the AprilTag pipeline configured for this camera.</li>
+ * </ol>
  */
 public class VisionSubsystem extends SubsystemBase {
 
     private final Telemetry m_telemetry;
     private final Limelight3A m_limelight;
+    private final IMU m_imu; // Required for MegaTag2
+    private final GoBildaPinpointDriver m_pinpoint;
 
     // Last estimated robot pose (field frame, meters & radians)
-    private double m_xPosition = 0.0;
-    private double m_yPosition = 0.0;
-    private double m_headingRad = 0.0;
+    private Pose2d m_lastPose = new Pose2d();
 
-    // Target tag poses (from LLResultTypes.FiducialResult)
-    // We keep them in meters from the field origin.
+    // Target tag poses
     private AprilTagPoseFtcLite m_redTargetPose;
     private AprilTagPoseFtcLite m_blueTargetPose;
 
-    /** Minimal AprilTag pose holder similar to AprilTagPoseFtc but without VisionPortal. */
+    /**
+     * Lightweight AprilTag pose data for target tracking.
+     */
     public static class AprilTagPoseFtcLite {
-        public final double x;      // meters, field coords
-        public final double y;      // meters, field coords
-        public final double z;      // meters (height), if you care
-        public final double range;  // meters, distance robot->tag (approx)
-        public final double bearingDeg; // bearing from robot to tag, deg
+        /** X position in meters. */
+        public final double x;
+        /** Y position in meters. */
+        public final double y;
+        /** Z position in meters. */
+        public final double z;
+        /** Planar range to the target in meters. */
+        public final double range;
+        /** Bearing to the target in degrees. */
+        public final double bearingDeg;
 
-        public AprilTagPoseFtcLite(double x, double y, double z,
-                                   double range, double bearingDeg) {
+        public AprilTagPoseFtcLite(double x, double y, double z, double range, double bearingDeg) {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -59,157 +76,227 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     public class PoseTrigger extends Trigger {
-        boolean m_update = false;
+        private boolean m_update = false;
 
         @Override
         public boolean get() {
             return m_update;
         }
+
+        /**
+         * Updates whether a new pose estimate is available.
+         *
+         * @param update true when a new pose was received
+         */
+        public void setUpdate(boolean update) {
+            m_update = update;
+        }
     }
+
     public final PoseTrigger m_poseTrigger = new PoseTrigger();
 
     public enum Motif {
-        NONE,
-        GPP,
-        PGP,
-        PPG
+        NONE, GPP, PGP, PPG
     }
 
     private Motif m_motif = Motif.NONE;
 
-    public VisionSubsystem(final HardwareMap hardwareMap, final Telemetry telemetry) {
+    /**
+     * Creates the vision subsystem using a standard IMU.
+     *
+     * @param hardwareMap hardware map used to retrieve the Limelight
+     * @param telemetry telemetry for optional diagnostics
+     * @param imu robot IMU used for MegaTag2 orientation updates; may be null
+     */
+    public VisionSubsystem(final HardwareMap hardwareMap, final Telemetry telemetry, IMU imu) {
         m_telemetry = telemetry;
         m_limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        m_imu = imu;
+        m_pinpoint = null;
 
-        // Configure Limelight here if desired (pipeline, LEDs, etc).
-        // Example:
-        // m_limelight.pipelineSwitch(0);
-        // m_limelight.setLEDMode(Limelight3A.LedMode.ON);
+        // Recommended initial setup
+        m_limelight.pipelineSwitch(0); // AprilTag pipeline
+        m_limelight.start();           // Start polling data
+    }
+
+    /**
+     * Creates the vision subsystem using a goBILDA Pinpoint computer as the IMU source.
+     *
+     * @param hardwareMap hardware map
+     * @param telemetry telemetry
+     * @param pinpoint Pinpoint driver instance
+     */
+    public VisionSubsystem(final HardwareMap hardwareMap, final Telemetry telemetry, GoBildaPinpointDriver pinpoint) {
+        m_telemetry = telemetry;
+        m_limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        m_imu = null;
+        m_pinpoint = pinpoint;
+
+        m_limelight.pipelineSwitch(0);
+        m_limelight.start();
+    }
+
+    /**
+     * Convenience constructor that fetches the Pinpoint from the hardware map.
+     */
+    public VisionSubsystem(final HardwareMap hardwareMap, final Telemetry telemetry) {
+        this(hardwareMap, telemetry, hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint"));
     }
 
     @Override
     public void periodic() {
         m_blueTargetPose = null;
         m_redTargetPose = null;
-        m_poseTrigger.m_update = false;
+        m_poseTrigger.setUpdate(false);
+        m_motif = Motif.NONE; // Reset every cycle or keep last known?
 
         LLResult result = m_limelight.getLatestResult();
-        if (result == null) {
+        if (result == null || !result.isValid()) {
             return;
         }
 
         List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
-        if (fiducials == null || fiducials.isEmpty()) return;
 
-        double meanX = 0, meanY = 0;
-        double meanEndX = 0, meanEndY = 0;
-        int numPoints = 0;
+        // Robot pose estimation in the field frame.
+        // Prefer MegaTag2 when the IMU/Pinpoint is available.
+        Pose3D botPose;
+        if (m_imu != null) {
+            YawPitchRollAngles orientation = m_imu.getRobotYawPitchRollAngles();
+            m_limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+            botPose = result.getBotpose_MT2();
+        } else if (m_pinpoint != null) {
+            m_pinpoint.update();
+            m_limelight.updateRobotOrientation(m_pinpoint.getHeading(AngleUnit.DEGREES));
+            botPose = result.getBotpose_MT2();
+        } else {
+            botPose = result.getBotpose();
+        }
 
-        for (LLResultTypes.FiducialResult f : fiducials) {
-            int id = f.getFiducialId();
+        if (botPose != null) {
+            double x = botPose.getPosition().x;
+            double y = botPose.getPosition().y;
+            double yawRad = Math.toRadians(botPose.getOrientation().getYaw());
 
-            // Field tag pose in meters (Limelight coordinate frame).
-            double tagX = f.getTargetPoseRobotSpace().getPosition().x; // robot-space, but we can still use to approximate heading
-            double tagY = f.getTargetPoseRobotSpace().getPosition().y;
+            m_lastPose = new Pose2d(x, y, new Rotation2d(yawRad));
+            m_poseTrigger.setUpdate(true);
+        }
 
-            // For robot pose estimation we still use the original averaging trick,
-            // but now based on robot-space vectors.
-            // Compute an approximate robot pose in a 2D plane:
-            // heading is direction from robot->tag; we build a unit vector from that.
-            double dx = tagX;
-            double dy = tagY;
-            double headingRad = Math.atan2(dy, dx);
+        // Process individual fiducials for targets and motif detection.
+        if (fiducials != null) {
+            for (LLResultTypes.FiducialResult f : fiducials) {
+                int id = f.getFiducialId();
 
-            // approximate "field" position of robot relative to tag
-            // by inverting the vector:
-            double robotX = -dx;
-            double robotY = -dy;
+                // Blue / Red target tags.
+                if (id == 20) { // blue
+                    m_blueTargetPose = makePoseFromFiducial(f);
+                } else if (id == 24) { // red
+                    m_redTargetPose = makePoseFromFiducial(f);
+                }
 
-            meanX += robotX;
-            meanY += robotY;
-
-            Vector2d vec = new Vector2d(1.0, 0.0).rotateBy(Math.toDegrees(headingRad));
-            meanEndX += robotX + vec.getX();
-            meanEndY += robotY + vec.getY();
-            numPoints++;
-
-            // Identify blue/red obelisk tags by ID
-            if (id == 20) { // blue obelisk
-                m_blueTargetPose = makePoseFromFiducial(f);
-            } else if (id == 24) { // red obelisk
-                m_redTargetPose = makePoseFromFiducial(f);
-            }
-
-            // Motif detection from obelisk tag IDs 21–23
-            if (m_motif == Motif.NONE) {
-                switch (id) {
-                    case 21: m_motif = Motif.GPP; break;
-                    case 22: m_motif = Motif.PGP; break;
-                    case 23: m_motif = Motif.PPG; break;
-                    default: break;
+                // Motif detection tags.
+                if (m_motif == Motif.NONE) {
+                    switch (id) {
+                        case 21: m_motif = Motif.GPP; break;
+                        case 22: m_motif = Motif.PGP; break;
+                        case 23: m_motif = Motif.PPG; break;
+                    }
                 }
             }
         }
-
-        if (numPoints > 0) {
-            meanX /= numPoints;
-            meanY /= numPoints;
-            meanEndX /= numPoints;
-            meanEndY /= numPoints;
-
-            m_xPosition = meanX;
-            m_yPosition = meanY;
-
-            Vector2d vec = new Vector2d(meanEndX - meanX, meanEndY - meanY);
-            m_headingRad = vec.angle(); // already radians
-
-            m_poseTrigger.m_update = true;
-        }
     }
 
-    /** Convert Limelight fiducial data into our lightweight pose. */
+    /**
+     * Converts a fiducial detection into a lightweight robot-space pose.
+     *
+     * @param f detected fiducial result
+     * @return pose data with range and bearing
+     */
     private AprilTagPoseFtcLite makePoseFromFiducial(LLResultTypes.FiducialResult f) {
-        // Robot-space coordinates (m)
-        double rx = f.getTargetPoseRobotSpace().getPosition().x;
-        double ry = f.getTargetPoseRobotSpace().getPosition().y;
-        double rz = f.getTargetPoseRobotSpace().getPosition().z;
-
+        Position pos = f.getTargetPoseRobotSpace().getPosition();
+        double rx = pos.x;
+        double ry = pos.y;
+        double rz = pos.z;
         double range = Math.hypot(rx, ry);
         double bearingDeg = Math.toDegrees(Math.atan2(ry, rx));
 
-        // For now we store pose in robot frame; callers that compare with robot pose
-        // should use range/bearing rather than x/y directly.
         return new AprilTagPoseFtcLite(rx, ry, rz, range, bearingDeg);
     }
 
-    /** Last estimated robot pose in *robot frame units* (meters, radians). */
+    /** @return the last estimated robot pose */
     public Pose2d getLastPose() {
-        return new Pose2d(m_xPosition, m_yPosition, new Rotation2d(m_headingRad));
+        return m_lastPose;
     }
 
+    /** @return the most recent red target pose, or null if not visible */
     public AprilTagPoseFtcLite getRedTargetPose() {
         return m_redTargetPose;
     }
 
+    /** @return the most recent blue target pose, or null if not visible */
     public AprilTagPoseFtcLite getBlueTargetPose() {
         return m_blueTargetPose;
     }
 
+    /** @return red target range in meters, or NaN if the target is not visible */
+    public double getRedTargetRange() {
+        return m_redTargetPose != null ? m_redTargetPose.range : Double.NaN;
+    }
+
+    /** @return blue target range in meters, or NaN if the target is not visible */
+    public double getBlueTargetRange() {
+        return m_blueTargetPose != null ? m_blueTargetPose.range : Double.NaN;
+    }
+
+    /** @return the current motif, or NONE when no matching tag is visible */
+    public Motif getMotif() {
+        return m_motif;
+    }
+
+    /** @return the Limelight camera instance used by this subsystem */
     public Limelight3A getLimelight() {
         return m_limelight;
     }
 
-    /** Range to red target in meters. */
-    public double getRedTargetRange() {
-        return (m_redTargetPose != null) ? m_redTargetPose.range : Double.NaN;
+    /**
+     * Manually pushes IMU/Pinpoint yaw to Limelight for MegaTag2 processing.
+     */
+    public void updateRobotOrientation() {
+        if (m_imu != null) {
+            YawPitchRollAngles angles = m_imu.getRobotYawPitchRollAngles();
+            m_limelight.updateRobotOrientation(angles.getYaw(AngleUnit.DEGREES));
+        } else if (m_pinpoint != null) {
+            m_pinpoint.update();
+            m_limelight.updateRobotOrientation(m_pinpoint.getHeading(AngleUnit.DEGREES));
+        }
     }
+    // Add at the bottom with other getters
+/**
+ * Returns the horizontal offset (tx) in degrees for the selected target.
+ * Positive = tag is to the right of camera center.
+ * Negative = tag is to the left.
+ */ 
+public double getTargetTx(boolean trackBlue) {
+    AprilTagPoseFtcLite target = trackBlue ? getBlueTargetPose() : getRedTargetPose();
+    if (target == null) return Double.NaN;
 
-    /** Range to blue target in meters. */
-    public double getBlueTargetRange() {
-        return (m_blueTargetPose != null) ? m_blueTargetPose.range : Double.NaN;
-    }
+    LLResult result = m_limelight.getLatestResult();
+    if (result == null || !result.isValid()) return Double.NaN;
 
-    public Motif getMotif() {
-        return m_motif;
+    List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+    if (fiducials == null) return Double.NaN;
+
+    int desiredId = trackBlue ? 20 : 24;
+
+    for (LLResultTypes.FiducialResult f : fiducials) {
+        if (f.getFiducialId() == desiredId) {
+            return f.getTargetXDegrees();           // Direct Limelight tx (degrees)
+        }
     }
+    return Double.NaN;
+}
+
+/** Convenience method using current config */
+//public double getTargetTx() {
+//    return getTargetTx(kTrackBlueTag); // you'll need to make kTrackBlueTag public or add a field
+//}
 }

@@ -69,7 +69,7 @@ public class DemoDriveOpMode extends CommandOpMode {
         m_shooterLeft  = new MotorSubsystem(hardwareMap, shooterLeftName,  encoderCpr, false);
         // One is usually reversed
         
-        RunCommand driveCommand = new RunCommand(() -> {
+        m_frontLeft.setDefaultCommand(new RunCommand(() -> {
             // UNMIRRORED: Standard stick inputs
             double x = -squareInput(m_gamepad.getLeftX());
             double y = squareInput(m_gamepad.getLeftY());
@@ -86,10 +86,10 @@ public class DemoDriveOpMode extends CommandOpMode {
                 fl /= max; fr /= max; bl /= max; br /= max;
             }
 
-            m_frontLeft.setRawPower(fl * driveScale);
-            m_frontRight.setRawPower(fr * driveScale);
-            m_backLeft.setRawPower(bl * driveScale);
-            m_backRight.setRawPower(br * driveScale);
+            m_frontLeft.setRawPower(-fl * driveScale);
+            m_frontRight.setRawPower(-fr * driveScale);
+            m_backLeft.setRawPower(-bl * driveScale);
+            m_backRight.setRawPower(-br * driveScale);
 
             // --- Button Debug Telemetry ---
             List<String> pressedButtons = new ArrayList<>();
@@ -101,9 +101,7 @@ public class DemoDriveOpMode extends CommandOpMode {
             telemetry.addData("Buttons Pressed", pressedButtons.isEmpty() ? "None" : pressedButtons.toString());
             telemetry.addData("Power of shooter motor:", shooterPower);
             telemetry.update();
-        }, m_frontLeft, m_frontRight, m_backLeft, m_backRight, m_intakeMotor, m_shooterLeft, m_shooterRight);
-
-        m_frontLeft.setDefaultCommand(driveCommand);
+        }, m_frontLeft, m_frontRight, m_backLeft, m_backRight));
 
         // --- Intake controls (Full Power) ---
         m_gamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
@@ -113,12 +111,13 @@ public class DemoDriveOpMode extends CommandOpMode {
                 .whileHeld(m_intakeMotor.setPowerCommand(intakeOutPower));
         m_gamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                         .whenPressed(new InstantCommand( () -> {
-                            if (shooterPower<1.0) shooterPower+=0.05;
+                             shooterPower+=0.05;
                         }));
         m_gamepad.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed( new InstantCommand( () -> {
                     if (shooterPower>0) shooterPower -=0.05;
                 }));
+
 
         // --- Optimized Shooter sequence (Full Power & Mirrored) ---
          m_gamepad.getGamepadButton(GamepadKeys.Button.A)

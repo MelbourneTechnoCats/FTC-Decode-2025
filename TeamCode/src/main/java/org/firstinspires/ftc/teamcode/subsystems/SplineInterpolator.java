@@ -1,78 +1,119 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 /**
- * Natural cubic spline interpolator for monotonic increasing x values.
- * Construct with arrays of x (strictly increasing) and y of the same length.
- *
- * This class is intentionally *pure numeric*:
- *  - it represents a single 1D spline (x -> y)
- *  - it does not manage any lookup tables or per-angle maps
- *
- * Higher-level code (e.g. NewShooterSubsystem) is responsible for:
- *  - storing per-angle (distance, velocity) samples
- *  - building one SplineInterpolator per angle when the LUT changes
+ * Natural Cubic Spline Interpolator (C² continuous).
+ * 
+ * Constructs a smooth cubic spline from strictly increasing x values.
+ * Excellent for shooter distance-to-velocity/hood tables.
  */
 public class SplineInterpolator {
+
     private final int n;
     private final double[] x;
-    private final double[] a;
+    private final double[] y;
+    private final double[] a;     // coefficients for cubic term
     private final double[] b;
-    // `b` stores per-segment slopes for linear interpolation
+    private final double[] c;
+    private final double[] d;
 
     /**
      * Build a natural cubic spline from sample points.
      *
-     * @param x sample x values, strictly increasing
-     * @param y sample y values, same length as x
+     * @param x sample x values (distances), must be strictly increasing
+     * @param y sample y values (velocity or hood ticks)
      */
     public SplineInterpolator(double[] x, double[] y) {
         if (x == null || y == null || x.length != y.length || x.length < 2) {
-            throw new IllegalArgumentException("Need at least two points with matching x/y arrays");
+            throw new IllegalArgumentException("Need at least 2 points with matching x/y arrays");
         }
+
         this.n = x.length;
         this.x = x.clone();
-        this.a = y.clone();
-        this.b = new double[n - 1];
-        // compute per-segment slopes and validate x monotonicity
+        this.y = y.clone();
+
+        this.a = new double[n];
+        this.b = new double[n];
+        this.c = new double[n];
+        this.d = new double[n];
+
+        buildSpline();
+    }
+
+    private void buildSpline() {
+        // Step 1: Copy y into a (we solve for the rest)
+        System.arraycopy(y, 0, a, 0, n);
+
+        double[] h = new double[n - 1];
         for (int i = 0; i < n - 1; i++) {
-            double dx = x[i + 1] - x[i];
-            if (dx <= 0.0) {
-                throw new IllegalArgumentException("x must be strictly increasing");
+            h[i] = x[i + 1] - x[i];
+            if (h[i] <= 0) {
+                throw new IllegalArgumentException("x values must be strictly increasing");
             }
-            b[i] = (a[i + 1] - a[i]) / dx;
+        }
+
+        // Natural cubic spline: second derivatives at endpoints = 0
+        double[] alpha = new double[n - 1];
+        for (int i = 1; i < n - 1; i++) {
+            alpha[i] = (3.0 / h[i]) * (a[i + 1] - a[i]) 
+                     - (3.0 / h[i - 1]) * (a[i] - a[i - 1]);
+        }
+
+        double[] l = new double[n];
+        double[] mu = new double[n];
+        double[] z = new double[n];
+
+        l[0] = 1.0;
+        mu[0] = 0.0;
+        z[0] = 0.0;
+
+        for (int i = 1; i < n - 1; i++) {
+            l[i] = 2.0 * (x[i + 1] - x[i - 1]) - h[i - 1] * mu[i - 1];
+            mu[i] = h[i] / l[i];
+            z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+        }
+
+        l[n - 1] = 1.0;
+        z[n - 1] = 0.0;
+        c[n - 1] = 0.0;
+
+        // Back substitution
+        for (int j = n - 2; j >= 0; j--) {
+            c[j] = z[j] - mu[j] * c[j + 1];
+            b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2.0 * c[j]) / 3.0;
+            d[j] = (c[j + 1] - c[j]) / (3.0 * h[j]);
         }
     }
 
     /**
-     * Evaluate the spline at xi.
-     * For xi outside the original x range, we extrapolate using the nearest segment.
-     *
-     * @param xi point to evaluate
-     * @return interpolated value
+     * Evaluate the cubic spline at xi.
+     * Extrapolates linearly outside the range.
      */
     public double interpolate(double xi) {
-        // Handle out-of-bounds on the left by extrapolating with first segment
-        int i;
         if (xi <= x[0]) {
-            i = 0;
-        // Handle out-of-bounds on the right by extrapolating with last segment
-        } else if (xi >= x[n - 1]) {
-            i = n - 2;
-        } else {
-            // Binary search for interval [x[low], x[low+1]] containing xi
-            int low = 0;
-            int high = n - 1;
-            while (high - low > 1) {
-                int mid = (low + high) >>> 1;
-                if (x[mid] <= xi) {
-                    low = mid;
-                } else {
-                    high = mid;
-                }
-            }
-            i = low;
+            // Linear extrapolation using first segment
+            double dx = xi - x[0];
+            return y[0] + b[0] * dx;
         }
-        double dx = xi - x[i];
-        return a[i] + b[i] * dx;
+        if (xi >= x[n - 1]) {
+            // Linear extrapolation using last segment
+            double dx = xi - x[n - 2];
+            return y[n - 1] + (b[n - 2] + 2.0 * c[n - 2] * (x[n - 1] - x[n - 2]) 
+                             + 3.0 * d[n - 2] * Math.pow(x[n - 1] - x[n - 2], 2)) * dx;
+        }
+
+        // Binary search to find the right interval
+        int low = 0;
+        int high = n - 1;
+        while (high - low > 1) {
+            int mid = (low + high) >>> 1;
+            if (x[mid] <= xi) {
+                low = mid;
+            } else {
+                high = mid;
+            }
+        }
+
+        double dx = xi - x[low];
+        return a[low] + b[low] * dx + c[low] * dx * dx + d[low] * dx * dx * dx;
     }
 }

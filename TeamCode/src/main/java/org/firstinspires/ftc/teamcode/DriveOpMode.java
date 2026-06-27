@@ -1,209 +1,145 @@
-//package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode;
+
+import com.acmerobotics.dashboard.config.Config;
+import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
+
+/**
+ * Main TeleOp mode integrating:
+ * - Drive + Vision
+ * - Turret (tx-based tracking)
+ * - Shooter + Hood (with spline interpolation)
+ * - Intake (single motor with pre-shoot reverse)
+ */
+@TeleOp(name = "Drive + Shooter + Turret", group = "TeleOp")
+@Config
+public class DriveOpMode extends CommandOpMode {
+
+    // Gamepads
+    private GamepadEx m_driver;
+    private GamepadEx m_operator;
+
+    // Subsystems
+    private DriveSubsystem m_drive;
+    private IntakeSubsystem m_intake;
+    private ShooterSubsystem m_shooter;
+//    private VisionSubsystem m_vision;
+    private TurretSubsystem m_turret;
+//    private HoodSubsystem m_hood;
+
+    // Drive settings
+    public static boolean fieldCentricDefault = false;
+    public static double driveScale = 1.0;
+    public static double rotScale = 1.0;
+
+    private boolean m_fieldCentric = fieldCentricDefault;
+
+    public static double squareInput(double input) {
+        return Math.copySign(input * input, input);
+    }
+
+    @Override
+    public void initialize() {
+        m_driver = new GamepadEx(gamepad1);
+        m_operator = new GamepadEx(gamepad2);
+
+
+        // Vision (used by Drive and Turret)
+//        m_vision = new VisionSubsystem(hardwareMap, telemetry);
+
+        // Drive
+        m_drive = new DriveSubsystem(hardwareMap, new com.acmerobotics.roadrunner.Pose2d(0, 0, 0), telemetry);
+
+        // Intake (single motor)
+        m_intake = new IntakeSubsystem(hardwareMap, telemetry);
+
+        // Shooter + Hood (now passes intake for pre-shoot behavior)
+//        m_shooter = new ShooterSubsystem(hardwareMap, telemetry, m_intake);
+//        m_hood = m_shooter.getHood();
+
+        // Turret
+        m_turret = new TurretSubsystem(hardwareMap, telemetry);
+
+        // ==================== Default Commands ====================
+
+//        // Default Drive Command
+//        m_drive.setDefaultCommand(
+//            new RunCommand(() -> {
+//                double lx = m_driver.getLeftX();
+//                double ly = m_driver.getLeftY();
+//                double rx = m_driver.getRightX();
 //
-//import com.acmerobotics.dashboard.config.Config;
-//import com.acmerobotics.roadrunner.Pose2d;
-//import com.arcrobotics.ftclib.command.Command;
-//import com.arcrobotics.ftclib.command.CommandOpMode;
-//import com.arcrobotics.ftclib.command.InstantCommand;
-//import com.arcrobotics.ftclib.command.ParallelCommandGroup;
-//import com.arcrobotics.ftclib.command.RunCommand;
-//import com.arcrobotics.ftclib.command.SelectCommand;
-//import com.arcrobotics.ftclib.command.WaitCommand;
-//import com.arcrobotics.ftclib.gamepad.GamepadEx;
-//import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+//                double x = squareInput(lx) * driveScale;
+//                double y = squareInput(ly) * driveScale;
+//                double rot = -squareInput(rx) * rotScale;
 //
-//import org.firstinspires.ftc.teamcode.commands.SequentialCommandGroup;
-//import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
+//                m_drive.drive(x, y, rot, m_fieldCentric);
 //
-////@TeleOp
-//@Config
-//public abstract class DriveOpMode extends CommandOpMode {
-//    private GamepadEx m_driveGamepad;
-//    private GamepadEx m_opGamepad;
-//    private DriveSubsystem m_driveSubsystem;
-//    private IntakeSubsystem m_intakeSubsystem;
-//    private SorterSubsystem m_sorterSubsystem;
-//    private VisionSubsystem m_visionSubsystem;
-//    private LiftSubsystem m_liftSubsystem;
-//    private IntakeAndSorterSubsystem m_intakeAndSorter;
-//    private ShooterSubsystem m_shooterSubsystem;
-//    private boolean m_fieldCentric = false;
-//
-//    public static double squareInput(double input) {
-//
-////        if (input >= 0) {
-////            output = input*input;
-////        }
-////        else{
-////            output = -input*input;
-////        }
-////        double output = input*input;
-////        if (input < 0) output *=-1;
-////        return output;
-//        return Math.copySign(input * input, input);
-//    }
-//
-//    public static double m_shootVelocity = 3000;
-//
-//    private static double m_shootAngle = 50;
-//    private static final double kDefaultRange = 1.80;
-//
-//    public void initialize(boolean blue) {
-//        m_driveGamepad = new GamepadEx(gamepad1);
-//        m_opGamepad = new GamepadEx(gamepad2);
-//
-//        m_visionSubsystem = new VisionSubsystem(hardwareMap, telemetry);
-//        m_driveSubsystem = new DriveSubsystem(hardwareMap, new Pose2d(0, 0, 0), telemetry, m_visionSubsystem);
-//        m_sorterSubsystem = new SorterSubsystem(hardwareMap);
-//        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
-//        m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
-//        m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
-//        m_liftSubsystem = new LiftSubsystem(hardwareMap);
-//
-//        m_driveSubsystem.setDefaultCommand(new RunCommand(
-//                () -> {
-//                    double leftX = m_driveGamepad.getLeftX();
-//                    double leftY = m_driveGamepad.getLeftY();
-//                    double rightX = m_driveGamepad.getRightX();
-//
-//                    telemetry.addData("Field-centric drive", m_fieldCentric);
-////                    telemetry.update(); // NOTE: telemetry.update() seems to clear telemetry data
-//
-//                    m_driveSubsystem.drive(
-//                            squareInput(leftX),
-//                            squareInput(leftY),
-//                            -squareInput(rightX),
-//                            m_fieldCentric
-//                    );
-//
-//                    com.arcrobotics.ftclib.geometry.Pose2d pose = m_driveSubsystem.getPose();
-//                    telemetry.addData("Robot X", pose.getX());
-//                    telemetry.addData("Robot Y", pose.getY());
-//                    telemetry.addData("Robot heading", Math.toDegrees(pose.getHeading()));
-//
-//                    telemetry.addData("Distance to Red Target (m)", m_visionSubsystem.getRedTargetRange());
-//                    telemetry.addData("Distance to Blue Target (m)", m_visionSubsystem.getBlueTargetRange());
-//
-//                    telemetry.addData("Intake distance sensor distance (cm)", m_intakeSubsystem.getSensorDistance());
-//
-//                    telemetry.addLine("Sorter occupancy: ") // update constantly
-//                            .addData("0", m_sorterSubsystem.occupancy[0])
-//                            .addData("1", m_sorterSubsystem.occupancy[1])
-//                            .addData("2", m_sorterSubsystem.occupancy[2]);
-//
-//                    telemetry.addData("Goal velocity multiplier", m_shooterSubsystem.getGoalVelocityMultiplier());
-//                    telemetry.addData("Shooting angle", m_shootAngle);
-//                }, m_driveSubsystem
-//        ));
-//
-//        m_driveGamepad.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
-//                .whenPressed(new InstantCommand(
-//                        () -> {
-//                            m_fieldCentric = !m_fieldCentric;
-//                        }
-//                ));
-//        m_driveGamepad.getGamepadButton(GamepadKeys.Button.Y)
-//                .whenPressed(m_liftSubsystem.extendCommand());
-//
-//        Command manualFeedCommand = new SequentialCommandGroup(
-//                new SelectCommand(() -> m_intakeAndSorter.setSorterAngleCommand(m_intakeAndSorter.getClosestCompartment(false), false)),
-//                m_shooterSubsystem.setAngleCommand(25)
+//                Pose2d pose = m_drive.getPose();
+//                telemetry.addData("Field Centric", m_fieldCentric);
+//                telemetry.addData("X", pose.getX());
+//                telemetry.addData("Y", pose.getY());
+//                telemetry.addData("Heading (deg)", pose.getHeading());
+//            }, m_drive)
 //        );
-//        Command resetSorterCommand = new SequentialCommandGroup(
-//                new SelectCommand(() -> m_shooterSubsystem.setAngleCommand(m_shootAngle)),
-//                m_intakeAndSorter.getAllColoursCommand()
-//        );
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.A)
-//                .whileHeld(m_intakeAndSorter.intakeCommand());
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.X)
-//                .whileHeld(m_intakeSubsystem.reverseCommand());
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.B)
-//                .whenPressed(manualFeedCommand)
-//                .whenReleased(resetSorterCommand);
-//        m_driveGamepad.getGamepadButton(GamepadKeys.Button.A)
-//                .whileHeld(m_intakeAndSorter.intakeCommand());
-//        m_driveGamepad.getGamepadButton(GamepadKeys.Button.X)
-//                .whileHeld(m_intakeSubsystem.reverseCommand());
-//        m_driveGamepad.getGamepadButton(GamepadKeys.Button.B)
-//                .whenPressed(manualFeedCommand)
-//                .whenReleased(resetSorterCommand);
+
+        // Default Turret - manual control with right stick
+        
+
+        // ==================== Driver Controls ====================
+
+//        // Toggle Field Centric
+//        m_driver.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
+//                .whenPressed(new InstantCommand(() -> m_fieldCentric = !m_fieldCentric));
 //
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-//                .whenPressed(new InstantCommand(() -> {
-//                    m_shooterSubsystem.setGoalVelocityMultiplier(m_shooterSubsystem.getGoalVelocityMultiplier() + 0.025);
-//                }));
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-//                .whenPressed(new InstantCommand(() -> {
-//                    m_shooterSubsystem.setGoalVelocityMultiplier(m_shooterSubsystem.getGoalVelocityMultiplier() - 0.025);
-//                }));
+//        // Intake Controls
+//        m_driver.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+//                .whileHeld(m_intake.runCommand());
 //
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-//                .whenPressed(new SelectCommand(() -> {
-//                    double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
-//                    if (Double.isNaN(range)) range = kDefaultRange;
-//                    return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, range, m_shootAngle, false); // TODO: adjust angle
-//                }));
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-//                .whenPressed(new SelectCommand(() -> {
-//                    double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
-//                    if (Double.isNaN(range)) range = kDefaultRange;
-//                    return m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, range, m_shootAngle, false); // TODO: adjust angle
-//                }));
-//        // NOTE: distance is in metres
+//        m_driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+//                .whileHeld(m_intake.reverseCommand());
+
+        // ==================== Operator Controls ====================
+
+        // Shoot using vision range (Blue / Red)
+        // This will trigger intake pre-shoot sequence (reverse → forward) + shooter + hood
+        /*m_operator.getGamepadButton(GamepadKeys.Button.A)
+                .whileHeld(() -> {
+                    double range = m_vision.getBlueTargetRange();
+                    if (!Double.isNaN(range)) {
+                        schedule(m_shooter.shootAtDistance(range));
+                    }
+                });
+
+        m_operator.getGamepadButton(GamepadKeys.Button.B)
+                .whileHeld(() -> {
+                    double range = m_vision.getRedTargetRange();
+                    if (!Double.isNaN(range)) {
+                        schedule(m_shooter.shootAtDistance(range));
+                    }
+                });*/
+
+        // Manual Hood Nudge
+//        m_operator.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+//                .whenPressed(new InstantCommand(m_hood::incrementUp));
 //
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-//                .whenPressed(
-//                        new InstantCommand(() -> { m_shootAngle += 5.0; })
-//                                .andThen(new SelectCommand(() -> m_shooterSubsystem.setAngleCommand(m_shootAngle)))
-//                );
+//        m_operator.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+//                .whenPressed(new InstantCommand(m_hood::incrementDown));
+
+        // Turret Controls
+//        m_operator.getGamepadButton(GamepadKeys.Button.X)
+//                .whenPressed(m_turret.autoTrackWithScanCommand());
 //
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-//                .whenPressed(
-//                        new InstantCommand(() -> { m_shootAngle -= 5.0; })
-//                                .andThen(new SelectCommand(() -> m_shooterSubsystem.setAngleCommand(m_shootAngle)))
-//                );
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
-//                .whenPressed(
-//                        new SelectCommand(() -> {
-//                            int compartment = m_sorterSubsystem.getCurrentCompartment() - 1;
-//                            if (compartment < 0) compartment = 2;
-//                            double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
-//                            if (Double.isNaN(range)) range = kDefaultRange;
-//                            return m_shooterSubsystem.shootCommand(compartment, range, m_shootAngle);
-//                        })
-//                );
-//        m_opGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
-//                .whenPressed(
-//                        new SelectCommand(() -> {
-//                            int compartment = m_sorterSubsystem.getCurrentCompartment() + 1;
-//                            if (compartment > 2) compartment = 0;
-//                            double range = (blue) ? m_visionSubsystem.getBlueTargetRange() : m_visionSubsystem.getRedTargetRange();
-//                            if (Double.isNaN(range)) range = kDefaultRange;
-//                            return m_shooterSubsystem.shootCommand(compartment, range, m_shootAngle);
-//                        })
-//                );
-//
-////        m_opGamepad.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-////                .whenPressed(new SelectCommand(() -> m_shooterSubsystem.shootCommandWithVelocity(SorterSubsystem.Colour.PURPLE, m_shootVelocity, 60)));
-//
-//        schedule(
-//                new SequentialCommandGroup(
-//                        new ParallelCommandGroup(
-//                                new SequentialCommandGroup(
-//                                        m_sorterSubsystem.setSorterAngleCommand(0, false),
-//                                        new WaitCommand((long) ((60 / SorterSubsystem.LEVER_SERVO_SPEED) * (300.0 / 360))) // wait for the longest period needed
-//                                ),
-//                                m_shooterSubsystem.setAngleCommand(m_shootAngle)
-//                        ),
-//                        m_intakeAndSorter.getAllColoursCommand()
-//                ),
-//                m_liftSubsystem.retractCommand()
-//        );
-//    }
-//}
+//        m_operator.getGamepadButton(GamepadKeys.Button.Y)
+//                .whenPressed(m_turret.stopCommand());
+
+        // Register all subsystems
+        register(m_drive, m_intake, m_shooter, m_turret);
+    }
+}

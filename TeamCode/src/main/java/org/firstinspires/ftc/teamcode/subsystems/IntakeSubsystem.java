@@ -1,110 +1,101 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
-import com.arcrobotics.ftclib.command.StartEndCommand;
+import com.arcrobotics.ftclib.command.ParallelCommandGroup;
+import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.SubsystemBase;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.arcrobotics.ftclib.command.WaitCommand;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
- * Intake subsystem with two independent motors and no sensors.
- *
- * "Left" and "Right" are just logical names; map them to your actual
- * config names in the constructor.
+ * Simple IntakeSubsystem with a single motor.
+ * Supports normal intake/outtake + pre-shoot reverse sequence.
  */
+@Config
 public class IntakeSubsystem extends SubsystemBase {
-    private final MotorEx m_leftMotor;
-    private final MotorEx m_rightMotor;
 
-    private final Telemetry m_telemetry;
+    private final MotorSubsystem m_intake;
+    private final MotorSubsystem m_boost;
 
-    public IntakeSubsystem(final HardwareMap hardwareMap, Telemetry telemetry) {
-        // TODO: change these strings to match your configuration
-        m_leftMotor = new MotorEx(hardwareMap, "leftIntakeMotor");
-        m_rightMotor = new MotorEx(hardwareMap, "rightIntakeMotor");
-        m_telemetry = telemetry;
+    private final Telemetry telemetry;
+
+    // Tunables
+    public static double IN_POWER = 10000.0;
+    public static double OUT_POWER = -0.7;
+    public static double PRE_SHOOT_REVERSE_POWER = -0.6;
+    public static double PRE_SHOOT_REVERSE_TIME_MS = 180;   // time to reverse before shooting
+
+    public IntakeSubsystem(HardwareMap hardwareMap, Telemetry telemetry) {
+        this.telemetry = telemetry;
+        this.m_intake = new MotorSubsystem(hardwareMap, "intakeMotor", 28, true);
+        this.m_boost = new MotorSubsystem(hardwareMap, "boostMotor", 28, true);
     }
 
-    // ---- Raw motor control helpers ----
-
-    public void setLeftPower(double power) {
-        m_leftMotor.set(power);
+    @Override
+    public void periodic() {
+        telemetry.addData("Intake Power", m_intake.getPower());
     }
 
-    public void setRightPower(double power) {
-        m_rightMotor.set(power);
-    }
+    // ====================== Basic Commands ======================
 
-    public void stopLeft() {
-        m_leftMotor.set(0);
-    }
-
-    public void stopRight() {
-        m_rightMotor.set(0);
-    }
-
-    public void stopBoth() {
-        m_leftMotor.set(0);
-        m_rightMotor.set(0);
-    }
-
-    // ---- Simple “both together” helpers (same behavior as old class) ----
-
-    /** Run both intake motors to pull game pieces in (tune directions as needed). */
-    public void intakeBoth() {
-        m_leftMotor.set(-1.0);
-        m_rightMotor.set(-1.0);
-    }
-
-    /** Run both intake motors to eject game pieces. */
-    public void outtakeBoth() {
-        m_leftMotor.set(1.0);
-        m_rightMotor.set(1.0);
-    }
-
-    // ---- Commands ----
-
-    /** Run both motors inward while this command is scheduled. */
     public Command runCommand() {
-        return new StartEndCommand(
-                this::intakeBoth,
-                this::stopBoth,
-                this
+        return new ParallelCommandGroup(
+                m_intake.setPowerCommand(() ->10),
+                m_boost.setPowerCommand(() -> 10)
         );
     }
 
-    /** Run both motors outward while this command is scheduled. */
+    public Command runBoostAndMotor() {
+        return new ParallelCommandGroup(
+                m_intake.setPowerCommand(-1.0),
+                m_boost.setPowerCommand(-1.0)
+        );
+    }
+
     public Command reverseCommand() {
-        return new StartEndCommand(
-                this::outtakeBoth,
-                this::stopBoth,
-                this
+        return new ParallelCommandGroup(
+                m_intake.setPowerCommand(() -> OUT_POWER),
+                m_boost.setPowerCommand(() -> OUT_POWER)
         );
     }
 
-    /** Stop both motors immediately. */
-    public Command stopCommand() {
-        return new InstantCommand(this::stopBoth, this);
-    }
-
-    /** Run only the left intake while scheduled. */
-    public Command runLeftCommand(double power) {
-        return new StartEndCommand(
-                () -> setLeftPower(power),
-                this::stopLeft,
-                this
+    public Command stop() {
+        return new ParallelCommandGroup(
+                m_intake.setPowerCommand(0.0),
+                m_boost.setPowerCommand(0.0)
         );
     }
 
-    /** Run only the right intake while scheduled. */
-    public Command runRightCommand(double power) {
-        return new StartEndCommand(
-                () -> setRightPower(power),
-                this::stopRight,
-                this
+    // ====================== Pre-Shoot Sequence ======================
+
+    /**
+     * Prepares intake for shooting: reverses briefly, then runs full speed forward.
+     * This command should run in parallel with shooter spin-up.
+     */
+    public Command preShootIntakeCommand() {
+        return new SequentialCommandGroup(
+                new InstantCommand(() -> {
+                    m_intake.setRawPower(PRE_SHOOT_REVERSE_POWER);
+                    m_boost.setRawPower(PRE_SHOOT_REVERSE_POWER);
+                }),
+                new WaitCommand((long) PRE_SHOOT_REVERSE_TIME_MS),
+                new InstantCommand(() -> {
+                    m_intake.setRawPower(IN_POWER);
+                    m_boost.setRawPower(IN_POWER);
+                })
         );
+    }
+
+    // Direct access (if needed)
+    public void setPower(double power) {
+        m_intake.setRawPower(power);
+    }
+
+    public double getPower() {
+        return m_intake.getPower();
     }
 }
