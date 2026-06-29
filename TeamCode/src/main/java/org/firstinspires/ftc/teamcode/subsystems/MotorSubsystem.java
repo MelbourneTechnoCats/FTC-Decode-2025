@@ -112,6 +112,7 @@ public class MotorSubsystem extends SubsystemBase {
     ) {
         // max RPM argument is not used because we implement our own velocity controller
         m_motor = new MotorEx(hardwareMap, name, encoderResolution, 0);
+        m_motor.setCachingTolerance(0.05);
         m_motor.setInverted(inverted);
         m_encoderResolution = encoderResolution;
 
@@ -165,31 +166,31 @@ public class MotorSubsystem extends SubsystemBase {
     }
 
     
-    // private double getBatteryVoltage() {
-    //     double result = Double.POSITIVE_INFINITY;
-    //     for (VoltageSensor sensor : m_voltageSensors) {
-    //         double voltage = sensor.getVoltage();
-    //         if (voltage > 0) {
-    //             result = Math.min(result, voltage);
-    //         }
-    //     }
-    //     return result;
-    // }
+     private double getBatteryVoltage() {
+         double result = Double.POSITIVE_INFINITY;
+         for (VoltageSensor sensor : m_voltageSensors) {
+             double voltage = sensor.getVoltage();
+             if (voltage > 0) {
+                 result = Math.min(result, voltage);
+             }
+         }
+         return result;
+     }
 
     
-    // public Command setVelocityCommand(double velocity) {
-    //     return new FunctionalCommand(
-    //             () -> { m_targetVelocity = velocity; },
-    //             () -> {
-    //                 double voltage = getBatteryVoltage();
-    //                 double power = (m_pidController.calculate(getVelocity(), velocity) + m_ffController.calculate(velocity)) / voltage;
-    //                 m_motor.set(Math.max(-1, Math.min(1, power)));
-    //             },
-    //             (Boolean interrupted) -> { m_motor.set(0); m_targetVelocity = Double.NaN; },
-    //             () -> false,
-    //             this
-    //     );
-    // }
+     public Command setVelocityCommand(double velocity) {
+         return new FunctionalCommand(
+                 () -> { m_targetVelocity = velocity; },
+                 () -> {
+                     double voltage = getBatteryVoltage();
+                     double power = (m_pidController.calculate(getVelocity(), velocity) + m_ffController.calculate(velocity)) / voltage;
+                     m_motor.set(Math.max(-1, Math.min(1, power)));
+                 },
+                 (Boolean interrupted) -> { m_motor.set(0); m_targetVelocity = Double.NaN; },
+                 () -> false,
+                 this
+         );
+     }
 
     
     public void setInverted(boolean inverted) {

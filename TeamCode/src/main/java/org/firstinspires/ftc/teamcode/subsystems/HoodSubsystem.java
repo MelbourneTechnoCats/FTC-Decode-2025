@@ -1,17 +1,16 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.seattlesolvers.solverslib.command.SubsystemBase;
-import com.seattlesolvers.solverslib.hardware.ServoEx;
-import com.seattlesolvers.solverslib.hardware.SimpleServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 @Config
 public class HoodSubsystem extends SubsystemBase {
 
     private final ServoEx m_servo;
 
-    public static double MIN_POS = -2;
-    public static double MAX_POS = 2;
+    public static double MIN_POS = 0;
+    public static double MAX_POS = 1;
 
     public static double MIN_TICKS = -10000;
     public static double MAX_TICKS = 10000;
@@ -19,19 +18,21 @@ public class HoodSubsystem extends SubsystemBase {
     public static double STEP_POS = 0.01;
 
     public HoodSubsystem(HardwareMap hardwareMap) {
-        m_servo = new SimpleServo(
+        m_servo = new ServoEx(
                 hardwareMap,
                 "hoodServo",
-                -360.0,   
-                360.0 
+                0,
+                1
         );
+
         double initPos = 0;
-        m_servo.setPosition(initPos);
+        m_servo.set(initPos);
+        m_servo.setCachingTolerance(0.05);
     }
 
     public void setPwm(double pwm) {
         double clamped = Math.max(MIN_POS, Math.min(MAX_POS, pwm));
-        m_servo.setPosition(clamped);
+        m_servo.set(clamped);
     }
 
     public void setPosition(int ticks) {
@@ -42,19 +43,19 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public double getCurrentPwm() {
-        return m_servo.getPosition();
+        return m_servo.get();
     }
 
     public void incrementUp() {
         double current = getCurrentPwm();
         if (Double.isNaN(current)) current = MIN_POS;
-        m_servo.setPosition(current + STEP_POS);
+        m_servo.set(current + STEP_POS);
     }
 
     public void incrementDown() {
         double current = getCurrentPwm();
         if (Double.isNaN(current)) current = MIN_POS;
-        m_servo.setPosition(current - STEP_POS);
+        m_servo.set(current - STEP_POS);
     }
 
     public void stop() {

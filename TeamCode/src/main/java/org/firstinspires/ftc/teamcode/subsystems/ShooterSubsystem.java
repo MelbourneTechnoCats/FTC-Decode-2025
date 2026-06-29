@@ -61,11 +61,11 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
         runAtVelocityCommand(rpm).schedule();
     }
 
-//    public void setHoodPosition(int ticks) {
-//        if (hood != null) {
-//            hood.setPosition(ticks);
-//        }
-//    }
+    public void setHoodPosition(int ticks) {
+        if (hood != null) {
+            hood.setPosition(ticks);
+        }
+    }
 
     public Command runAtVelocityCommand(double rpm) {
         return m.setVelocityCommand(rpm);

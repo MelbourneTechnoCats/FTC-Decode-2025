@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.FunctionalCommand;
-import com.seattlesolvers.solverslib.command.RunCommand;
+import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
@@ -72,7 +72,7 @@ public class TurretSubsystem extends SubsystemBase {
      * Directly set the turret motor power.
      */
     public void setPower(double power) {
-        m_turretMotor.setRawPocwer(power);
+        m_turretMotor.setRawPower(power);
     }
 
     private double getCurrentTx() {
@@ -120,14 +120,14 @@ public class TurretSubsystem extends SubsystemBase {
 
 
 
-    public Command trackTarget(){
+    public Command lockToTarget(){
 
         /**
          * if no tag: rotate to find a tag at a slow speed
          * if find tag: stop scan, try to minimize tX with PID
          *
          * */
-       return new RunCommand(
+       return new InstantCommand(
                () -> {
                    m_turretMotor.setRawPower(computeTrackingPower());
                }

@@ -83,8 +83,8 @@ public class DriveOpMode extends CommandOpMode {
         m_driver.getGamepadButton(GamepadKeys.Button.DPAD_DOWN).whileHeld(
                 () -> m_hood.incrementDown()
         );
-        m_operator.getGamepadButton(GamepadKeys.Button.A).whenPressed(
-                m_turret.trackTarget()
+        m_operator.getGamepadButton(GamepadKeys.Button.A).whileHeld(
+                m_turret.lockToTarget()
         );
 
 
