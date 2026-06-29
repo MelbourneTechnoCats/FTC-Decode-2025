@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import com.arcrobotics.ftclib.command.Command;
-import com.arcrobotics.ftclib.command.InstantCommand;
-import com.arcrobotics.ftclib.command.SubsystemBase;
-import com.arcrobotics.ftclib.command.WaitUntilCommand;
-import com.arcrobotics.ftclib.hardware.ServoEx;
-import com.arcrobotics.ftclib.hardware.SimpleServo;
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.command.WaitUntilCommand;
+import com.seattlesolvers.solverslib.hardware.ServoEx;
+import com.seattlesolvers.solverslib.hardware.SimpleServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -74,7 +74,7 @@ public class ServoSubsystem extends SubsystemBase {
      * @return the current position, or {@code Double.NaN} if not yet initialized
      */
     public double getCurrentPosition() {
-        return m_currentPosition;
+        return m_servo.getPosition();
     }
 
     /**
@@ -84,6 +84,9 @@ public class ServoSubsystem extends SubsystemBase {
      */
     public double getTargetPosition() {
         return m_targetPosition;
+    }
+    public void moveUp(){
+        m_servo.turnToAngle(m_servo.getAngle()+20);
     }
 
     private boolean m_moving = false; // set if the servo is "moving"

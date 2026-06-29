@@ -1,65 +1,62 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.hardware.ServoEx;
+import com.seattlesolvers.solverslib.hardware.SimpleServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
-/**
- * Hood subsystem backed by a servo instead of a motor.
- *
- * Uses ServoSubsystem to move the hood to a desired angle (degrees).
- */
 @Config
-public class HoodSubsystem {
+public class HoodSubsystem extends SubsystemBase {
 
-    private final ServoSubsystem m_servo;
+    private final ServoEx m_servo;
 
-    // Hood physical range in degrees (tune these!)
-    public static double MIN_HOOD_ANGLE_DEG = 0.0;
-    public static double MAX_HOOD_ANGLE_DEG = 60.0;
+    public static double MIN_POS = -2;
+    public static double MAX_POS = 2;
 
-    // Servo speed in RPM (from datasheet; adjust if needed)
-    public static double SERVO_SPEED_RPM = 50.0;
+    public static double MIN_TICKS = -10000;
+    public static double MAX_TICKS = 10000;
 
-    // Step size for manual nudging
-    public static double STEP_DEG = 1.0;
+    public static double STEP_POS = 0.01;
 
     public HoodSubsystem(HardwareMap hardwareMap) {
-        // "hoodServo" must be configured in the RC config as a servo
-        m_servo = new ServoSubsystem(
+        m_servo = new SimpleServo(
                 hardwareMap,
                 "hoodServo",
-                SERVO_SPEED_RPM,
-                MIN_HOOD_ANGLE_DEG,
-                MAX_HOOD_ANGLE_DEG,
-                AngleUnit.DEGREES
+                -360.0,   
+                360.0 
         );
+        double initPos = 0;
+        m_servo.setPosition(initPos);
     }
 
-    /** Move hood to a specific angle in degrees (clamped to [MIN, MAX]). */
-    public void setAngle(double angleDeg) {
-        m_servo.setAngle(angleDeg, AngleUnit.DEGREES);
+    public void setPwm(double pwm) {
+        double clamped = Math.max(MIN_POS, Math.min(MAX_POS, pwm));
+        m_servo.setPosition(clamped);
     }
 
-    /** Current estimated hood angle in degrees. */
-    public double getCurrentAngle() {
-        return m_servo.getCurrentPosition();
+    public void setPosition(int ticks) {
+//        double clampedTicks = Math.max(MIN_TICKS, Math.min(MAX_TICKS, ticks));
+//        double frac = (clampedTicks - MIN_TICKS) / (MAX_TICKS - MIN_TICKS);
+//        double pwm = MIN_POS + frac * (MAX_POS - MIN_POS);
+        setPwm(ticks);
     }
 
-    /** Nudge hood up by STEP_DEG. */
+    public double getCurrentPwm() {
+        return m_servo.getPosition();
+    }
+
     public void incrementUp() {
-        double current = Double.isNaN(getCurrentAngle()) ? MIN_HOOD_ANGLE_DEG : getCurrentAngle();
-        setAngle(current + STEP_DEG);
+        double current = getCurrentPwm();
+        if (Double.isNaN(current)) current = MIN_POS;
+        m_servo.setPosition(current + STEP_POS);
     }
 
-    /** Nudge hood down by STEP_DEG. */
     public void incrementDown() {
-        double current = Double.isNaN(getCurrentAngle()) ? MIN_HOOD_ANGLE_DEG : getCurrentAngle();
-        setAngle(current - STEP_DEG);
+        double current = getCurrentPwm();
+        if (Double.isNaN(current)) current = MIN_POS;
+        m_servo.setPosition(current - STEP_POS);
     }
 
-    /** Stop is effectively a no-op for positional servo, but kept for API compatibility. */
     public void stop() {
-        // nothing to do; positional servos hold last command
     }
 }

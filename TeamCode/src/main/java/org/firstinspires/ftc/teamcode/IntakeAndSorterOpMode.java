@@ -1,10 +1,10 @@
 //package org.firstinspires.ftc.teamcode;
 //
-//import com.arcrobotics.ftclib.command.CommandOpMode;
-//import com.arcrobotics.ftclib.command.InstantCommand;
-//import com.arcrobotics.ftclib.command.SelectCommand;
-//import com.arcrobotics.ftclib.gamepad.GamepadEx;
-//import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+//import com.seattlesolvers.solverslib.command.CommandOpMode;
+//import com.seattlesolvers.solverslib.command.InstantCommand;
+//import com.seattlesolvers.solverslib.command.SelectCommand;
+//import com.seattlesolvers.solverslib.gamepad.GamepadEx;
+//import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 //import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 //
 //import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;

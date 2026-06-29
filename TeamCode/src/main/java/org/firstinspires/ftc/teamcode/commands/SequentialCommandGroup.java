@@ -7,8 +7,8 @@
 
 package org.firstinspires.ftc.teamcode.commands;
 
-import com.arcrobotics.ftclib.command.Command;
-import com.arcrobotics.ftclib.command.CommandGroupBase;
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.CommandGroupBase;
 
 import java.util.ArrayList;
 import java.util.List;

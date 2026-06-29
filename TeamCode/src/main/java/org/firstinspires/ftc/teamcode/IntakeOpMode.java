@@ -1,10 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.arcrobotics.ftclib.command.CommandOpMode;
-import com.arcrobotics.ftclib.command.ParallelCommandGroup;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.seattlesolvers.solverslib.command.CommandOpMode;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
+import com.seattlesolvers.solverslib.gamepad.GamepadEx;
+import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
@@ -37,8 +37,14 @@ public class IntakeOpMode extends CommandOpMode {
                         m_intake.runCommand(), m_shooter.runAtVelocityCommand(-8000)
                 )
         );
+        m_driver.getGamepadButton(GamepadKeys.Button.B).whenHeld(
+                m_intake.runCommand()
+        );
+        m_driver.getGamepadButton(GamepadKeys.Button.X).whenHeld(
+                m_intake.reverseCommand()
+        );
         telemetry.addData("Intake Power", m_intake.getPower());
-        telemetry.update();
+        telemetry.update(); 
 
         // Register intake so periodic() runs
         register(m_intake);

@@ -1,3 +1,4 @@
+package org.firstinspires.ftc.teamcode.subsystems;
 public class Ballistics {
 
         public static final double GRAVITY = 9.81;
@@ -16,17 +17,16 @@ public class Ballistics {
                         throw new IllegalArgumentException("Flight time must be positive");
                 }
 
-                // Required field-relative velocity
+                
                 double vX = deltaX / flightTime;
                 double vZ = (deltaZ + 0.5 * GRAVITY * flightTime * flightTime) / flightTime;
 
-                // Moving robot compensation
-                double vLx = vX - robotVelocity;
+
+                double vLx = vX - robotVelocity; // compensation
                 double vLz = vZ;
 
-                // Impossible shot:
-                // robot is moving faster toward target than the
-                // required projectile horizontal speed.
+                // impossible show
+
                 if (vLx <= 0) {
                         return ShooterSolution.invalid("Launcher would need to shoot backwards");
                 }

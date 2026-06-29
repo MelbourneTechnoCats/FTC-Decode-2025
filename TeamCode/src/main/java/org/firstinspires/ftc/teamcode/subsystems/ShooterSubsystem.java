@@ -1,14 +1,12 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.arcrobotics.ftclib.command.Command;
-import com.arcrobotics.ftclib.command.InstantCommand;
-import com.arcrobotics.ftclib.command.ParallelCommandGroup;
-import com.arcrobotics.ftclib.command.SequentialCommandGroup;
-import com.arcrobotics.ftclib.command.SubsystemBase;
-import com.arcrobotics.ftclib.command.WaitCommand;
-import com.arcrobotics.ftclib.command.WaitUntilCommand;
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Config
@@ -16,6 +14,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
         private final MotorSubsystem m;
         private final HoodSubsystem hood;
         private final IntakeSubsystem intake;
+        private final LimelightSubsystem limelight;
         private final Telemetry t;
 
         public static double INCH_TO_M = 0.0254;
@@ -40,16 +39,19 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
     public static double kV = 0.0018;
     public static double kA = 0;
 
-    public ShooterSubsystem(HardwareMap hm, Telemetry telemetry, IntakeSubsystem intake, HoodSubsystem hood) {
+    public ShooterSubsystem(HardwareMap hm, Telemetry telemetry, IntakeSubsystem intake, HoodSubsystem hood, LimelightSubsystem limelight) {
         this.m = new MotorSubsystem(hm, "shooterMotor", 28, false, kP, kI, kD, kS, kV, kA, 0.05);
         this.hood = hood;
         this.intake = intake;
         this.t = telemetry;
+        this.limelight = limelight;
     }
 
     public ShooterSubsystem(HardwareMap hm, Telemetry telemetry) {
-        this(hm, telemetry, null, null);
+        this(hm, telemetry, null, null, null);
     }
+
+
 
     public void setPower(double power) {
         m.setRawPower(power);
@@ -59,11 +61,11 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
         runAtVelocityCommand(rpm).schedule();
     }
 
-    public void setHoodPosition(int ticks) {
-        if (hood != null) {
-            hood.setPosition(ticks);
-        }
-    }
+//    public void setHoodPosition(int ticks) {
+//        if (hood != null) {
+//            hood.setPosition(ticks);
+//        }
+//    }
 
     public Command runAtVelocityCommand(double rpm) {
         return m.setVelocityCommand(rpm);
@@ -75,7 +77,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
     public Command aimAndSpinCommand(DriveSubsystem drive, double targetXIn, double targetYIn) {
         return new InstantCommand(() -> {
-            com.arcrobotics.ftclib.geometry.Pose2d pose = drive.getPose();
+            com.seattlesolvers.solverslib.geometry.Pose2d pose = drive.getPose();
             double robotXM = pose.getX() * INCH_TO_M;
             double robotYM = pose.getY() * INCH_TO_M;
 
@@ -88,7 +90,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
             double deltaX = Math.hypot(dx, dy);
             double deltaZ = TARGET_HEIGHT_M - SHOOTER_HEIGHT_M;
 
-            com.arcrobotics.ftclib.geometry.Vector2d fieldVel = drive.getFieldVelocity();
+            com.seattlesolvers.solverslib.geometry.Vector2d fieldVel = drive.getFieldVelocity();
             double dist = Math.hypot(dx, dy);
             double ux = (dist > 1e-6) ? dx / dist : 0.0;
             double uy = (dist > 1e-6) ? dy / dist : 0.0;
@@ -145,8 +147,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
     public void periodic() {
         t.addLine("Shooter:")
                 .addData("targetRPM", m.getTargetVelocity())
-                .addData("actualRPM", m.getVelocity())
-                .addData("atSpeed", isVelocityReached());
+                .addData("actualRPM", m.getVelocity());
+//                .addData("atSpeed", isVelocityReached());
 
         if (intake != null) {
             t.addData("Intake Power", intake.getPower());
