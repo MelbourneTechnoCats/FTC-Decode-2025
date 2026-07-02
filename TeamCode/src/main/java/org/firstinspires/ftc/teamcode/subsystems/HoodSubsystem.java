@@ -7,10 +7,11 @@ import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 @Config
 public class HoodSubsystem extends SubsystemBase {
 
-    private final ServoEx m_servo;
+    private final ServoEx m_servo;// minpos = 45, maxpos = 90
+
 
     public static double MIN_POS = 0;
-    public static double MAX_POS = 1;
+    public static double MAX_POS = 0.9;
 
     public static double MIN_TICKS = -10000;
     public static double MAX_TICKS = 10000;
@@ -27,7 +28,7 @@ public class HoodSubsystem extends SubsystemBase {
 
         double initPos = 0;
         m_servo.set(initPos);
-        m_servo.setCachingTolerance(0.05);
+
     }
 
     public void setPwm(double pwm) {

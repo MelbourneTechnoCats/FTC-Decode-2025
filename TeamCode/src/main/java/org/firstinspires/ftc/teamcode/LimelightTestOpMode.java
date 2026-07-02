@@ -1,16 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.FunctionalCommand;
 import com.seattlesolvers.solverslib.command.RunCommand;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.subsystems.LimelightSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.MotorSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 /**
  * Limelight/AprilTag heading alignment test.
@@ -47,6 +48,8 @@ public class LimelightTestOpMode extends CommandOpMode {
     private MotorSubsystem m_backLeft;
     private MotorSubsystem m_backRight;
 
+    private ShooterSubsystem m_shooter;
+
     // Variable to track heading
     private double m_robotHeading = 0.0;
 
@@ -70,6 +73,16 @@ public class LimelightTestOpMode extends CommandOpMode {
             double rot = -DemoDriveOpMode.squareInput(m_gamepad.getRightX());
 
             setDrivePower(x, y, rot);
+            String targetPoseCamera = "";
+            if (!m_limelight.limelight.getLatestResult().getFiducialResults().isEmpty()) targetPoseCamera = m_limelight.limelight.getLatestResult().getFiducialResults().get(0).getTargetPoseCameraSpace().getPosition().toString();
+                    else targetPoseCamera = "no target";
+
+
+
+
+            String targetPoseRobot = "";
+            if (!m_limelight.limelight.getLatestResult().getFiducialResults().isEmpty()) targetPoseRobot = m_limelight.limelight.getLatestResult().getFiducialResults().get(0).getTargetPoseRobotSpace().getPosition().toString();
+            else targetPoseRobot = "no target";
 
             // Update heading variable
             m_robotHeading = m_limelight.getRobotHeading();
@@ -78,6 +91,8 @@ public class LimelightTestOpMode extends CommandOpMode {
             telemetry.addData("Robot Heading (deg)", "%.2f", m_robotHeading);
             telemetry.addData("Limelight tx", "%.2f", m_limelight.getTX());
             telemetry.addData("Has Tag", m_limelight.hasTarget());
+            telemetry.addData("position according to camera", targetPoseCamera);
+            telemetry.addData("position according to robot", targetPoseRobot);
             telemetry.update();
         }, m_frontLeft, m_frontRight, m_backLeft, m_backRight));
 

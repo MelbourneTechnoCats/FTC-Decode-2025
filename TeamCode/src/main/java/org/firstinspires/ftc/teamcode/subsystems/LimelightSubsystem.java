@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
 import java.util.List;
 
@@ -14,7 +16,7 @@ import java.util.List;
  * Provides target tracking data directly from the Limelight hardware without VisionSubsystem.
  */
 public class LimelightSubsystem extends SubsystemBase {
-    private final Limelight3A limelight;
+    public final Limelight3A limelight;
     private final Telemetry telemetry;
     private final DriveSubsystem drive;
 
@@ -71,6 +73,13 @@ public class LimelightSubsystem extends SubsystemBase {
         if (!Double.isNaN(blueTx)) telemetry.addData("LL Blue Tx", "%.2f", blueTx);
         if (!Double.isNaN(redTx)) telemetry.addData("LL Red Tx", "%.2f", redTx);
     }
+    public Position getDistance(){
+        boolean b = !limelight.getLatestResult().getFiducialResults().isEmpty();
+        if (b) return limelight.getLatestResult().getFiducialResults().get(0).getCameraPoseTargetSpace().getPosition();
+        else return new Position();
+    }
+
+
 
     /**
      * Switches between pipelines.

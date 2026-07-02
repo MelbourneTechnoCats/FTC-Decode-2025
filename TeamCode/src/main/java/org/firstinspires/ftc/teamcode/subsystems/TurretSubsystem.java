@@ -24,7 +24,7 @@ public class TurretSubsystem extends SubsystemBase {
     public static double kTurretEncoderResolution = 28.0;
     public static boolean kTurretInverted = false;
 
-    public static double kAimP = 0.1;           // Power per degree of tx error
+    public static double kAimP = 0.15;           // Power per degree of tx error
     public static double kFeedForward = 0.08;     // Small constant to overcome friction
     public static double kMaxAutoPower = 1;
 
@@ -51,6 +51,7 @@ public class TurretSubsystem extends SubsystemBase {
                 kTurretEncoderResolution,
                 kTurretInverted
         );
+
     }
 
     /**

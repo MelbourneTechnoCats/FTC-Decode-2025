@@ -9,7 +9,7 @@ public class HoodOpMode extends LinearOpMode {
 
     private Servo servo;
 
-    private double position = 0.5;
+    private double position = 0;
 
     @Override
     public void runOpMode() {
@@ -26,7 +26,7 @@ public class HoodOpMode extends LinearOpMode {
                 position += 0.01;
             }
 
-            if (gamepad1.dpad_down && position <= 0.65) {
+            if (gamepad1.dpad_down ) {
                 position -=0.01;
             }
 

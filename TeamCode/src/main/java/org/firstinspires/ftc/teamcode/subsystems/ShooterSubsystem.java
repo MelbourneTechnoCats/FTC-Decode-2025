@@ -75,14 +75,16 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
         return m.setPowerCommand(power);
     }
 
-    public Command aimAndSpinCommand(DriveSubsystem drive, double targetXIn, double targetYIn) {
+    public Command aimAndSpinCommand(DriveSubsystem drive) {
         return new InstantCommand(() -> {
             com.seattlesolvers.solverslib.geometry.Pose2d pose = drive.getPose();
             double robotXM = pose.getX() * INCH_TO_M;
             double robotYM = pose.getY() * INCH_TO_M;
+            double targetX = limelight.getDistance().x;
+            double targetY = limelight.getDistance().z;
 
-            double targetXM = targetXIn * INCH_TO_M;
-            double targetYM = targetYIn * INCH_TO_M;
+            double targetXM = targetX * INCH_TO_M;
+            double targetYM = targetY * INCH_TO_M;
 
             double dx = targetXM - robotXM;
             double dy = targetYM - robotYM;
@@ -114,10 +116,11 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
             runAtVelocityCommand(sol.rpm).schedule();
 
-            if (hood != null) {
-                int hoodTicks = angleToTicks(sol.hoodAngleDegrees);
-                hood.setPosition(hoodTicks);
-            }
+//            if (hood != null) {
+//                int hoodTicks = angleToTicks(sol.hoodAngleDegrees);
+//                hood.setPosition(hoodTicks);
+//            }
+//            intake.runCommand().schedule();
 
             t.addData("Ballistics", "OK vel=%.2f m/s rpm=%.0f angle=%.1f",
                     sol.launcherVelocity, sol.rpm, sol.hoodAngleDegrees);

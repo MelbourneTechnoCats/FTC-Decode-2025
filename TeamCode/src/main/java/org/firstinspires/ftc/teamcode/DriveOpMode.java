@@ -1,13 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
-import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 import com.seattlesolvers.solverslib.geometry.Pose2d;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.HoodSubsystem;
@@ -16,7 +15,7 @@ import org.firstinspires.ftc.teamcode.subsystems.LimelightSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 
-@Teleop
+@TeleOp
 @Config
 public class DriveOpMode extends CommandOpMode {
 
@@ -30,6 +29,7 @@ public class DriveOpMode extends CommandOpMode {
     private HoodSubsystem m_hood;
     private TurretSubsystem m_turret;
     private LimelightSubsystem m_limelight;
+    private int shooterSpeed = -1;
 
     public static boolean fieldCentricDefault = false;
     public static double driveScale = 1.0;
@@ -69,26 +69,47 @@ public class DriveOpMode extends CommandOpMode {
 
         m_driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whileHeld(m_intake.reverseCommand());
+        m_operator.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whileHeld(m_intake.runCommand());
 
-        m_driver.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(new ParallelCommandGroup(
-                        m_intake.runCommand(), m_shooter.runAtPowerCommand(-1)
-                ))
+        m_operator.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whileHeld(m_intake.reverseCommand());
+
+        m_operator.getGamepadButton(GamepadKeys.Button.A)
+                .whenPressed(
+                        m_shooter.runAtPowerCommand(shooterSpeed)
+
+                )
                 .whenReleased(
                         m_shooter.stop()
                 );
-        m_driver.getGamepadButton(GamepadKeys.Button.DPAD_UP).whileHeld(
+        m_operator.getGamepadButton(GamepadKeys.Button.X)
+                .whenPressed(
+                        m_shooter.runAtPowerCommand(-shooterSpeed)
+
+                )
+                .whenReleased(
+                        m_shooter.stop()
+                );
+        m_operator.getGamepadButton(GamepadKeys.Button.DPAD_UP).whileHeld(
                 () ->  m_hood.incrementUp()
         );
-        m_driver.getGamepadButton(GamepadKeys.Button.DPAD_DOWN).whileHeld(
+        m_operator.getGamepadButton(GamepadKeys.Button.DPAD_DOWN).whileHeld(
                 () -> m_hood.incrementDown()
         );
-        m_operator.getGamepadButton(GamepadKeys.Button.A).whileHeld(
+        m_operator.getGamepadButton(GamepadKeys.Button.DPAD_LEFT).whileHeld(
+                () -> shooterSpeed -= 0.05
+        );
+        m_operator.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT).whileHeld(
+                () -> shooterSpeed += 0.05
+        );
+
+        m_operator.getGamepadButton(GamepadKeys.Button.B).whileHeld(
                 m_turret.lockToTarget()
         );
 
 
-        register(m_drive, m_intake);
+        register(m_drive, m_intake, m_hood, m_shooter, m_limelight);
     }
     @Override
     public void run() {
@@ -98,11 +119,11 @@ public class DriveOpMode extends CommandOpMode {
             return;
         }
 
-        double x   = squareInput(m_driver.getLeftX()) * driveScale;
+        double x   = -squareInput(m_driver.getLeftX()) * driveScale;
         double y   = squareInput(-m_driver.getLeftY()) * driveScale;
         double rot = squareInput(m_driver.getRightX()) * rotScale;
         m_drive.drive(x, y, rot, m_fieldCentric);
-
+        m_turret.setPower(m_operator.getLeftX());
         
 
         Pose2d pose = m_drive.getPose();
@@ -110,6 +131,7 @@ public class DriveOpMode extends CommandOpMode {
         telemetry.addData("tracking power", m_turret.computeTrackingPower());
         telemetry.addData("Pose X", pose.getX());
         telemetry.addData("Pose Y", pose.getY());
+        telemetry.addData("Shooter speed", shooterSpeed);
         telemetry.addData("Heading Deg", pose.getHeading());
         telemetry.addData("Hood position: ", m_hood.getCurrentPwm());
         telemetry.addData("tag pos", m_limelight.getTX()+ " " + m_limelight.getTY());

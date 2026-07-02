@@ -131,6 +131,7 @@ public class MotorSubsystem extends SubsystemBase {
     
     public void setFFCoefficients(double kS, double kV, double kA) {
         m_ffController = new SimpleMotorFeedforward(kS, kV, kA);
+
     }
 
     private double m_targetVelocity = Double.NaN;
