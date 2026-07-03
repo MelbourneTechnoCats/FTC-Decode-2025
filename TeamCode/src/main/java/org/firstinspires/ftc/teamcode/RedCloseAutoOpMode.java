@@ -26,9 +26,9 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 import java.util.Timer;
 
-@Autonomous(name = "red far auto", group = "Autonomous")
+@Autonomous(name = "red close auto", group = "Autonomous")
 @Configurable // Panels
-public class RedFarAutoOpMode extends LinearOpMode {
+public class RedCloseAutoOpMode extends LinearOpMode {
     private TelemetryManager panelsTelemetry; // Panels Telemetry instance
     public Follower follower; // Pedro Pathing follower instance
     private ShooterSubsystem shooter;
@@ -85,25 +85,25 @@ public class RedFarAutoOpMode extends LinearOpMode {
             auto = follower.pathBuilder()
                     .addPath(
                             new BezierLine(
-                                    new Pose(84.640, 7.291),
-                                    new Pose(65.074, 92.430)
+                                    new Pose(99.953, 141.560),
+                                    new Pose(69.469, 78.677)
                             )
                     )
                     .setTangentHeadingInterpolation()
                     .addPath(
                             new BezierLine(
-                                    new Pose(65.074, 92.430),
-                                    new Pose(60.678, 96.802)
+                                    new Pose(69.469, 78.677),
+                                    new Pose(62.096, 92.832)
                             )
                     )
                     .setTangentHeadingInterpolation()
                     .build();
             after = follower.pathBuilder().addPath(
-                    new BezierLine(
-                            new Pose(62.096, 92.832),
-                            new Pose(60.158, 37.311)
+                            new BezierLine(
+                                    new Pose(62.096, 92.832),
+                                    new Pose(60.158, 37.311)
+                            )
                     )
-            )
                     .setTangentHeadingInterpolation()
                     .build();
 
@@ -114,7 +114,7 @@ public class RedFarAutoOpMode extends LinearOpMode {
         return sequential(
                 follow(follower, paths.auto),
                 Commands.waitMs(500),
-                Commands.instant(() -> new ParallelCommandGroup(shooter.runAtPowerCommand(0.5), new WaitCommand(500))),
+                Commands.instant(() -> new ParallelCommandGroup(shooter.runAtPowerCommand(0.5), new WaitCommand(1000))),
 
                 Commands.instant(() -> new ParallelCommandGroup(
                         shooter.runAtPowerCommand(-0.7),

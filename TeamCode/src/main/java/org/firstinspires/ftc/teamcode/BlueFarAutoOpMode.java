@@ -1,167 +1,157 @@
-//package org.firstinspires.ftc.teamcode;
-//
-//import com.acmerobotics.roadrunner.Action;
-//import com.acmerobotics.roadrunner.Pose2d;
-//import com.acmerobotics.roadrunner.Vector2d;
-//import com.seattlesolvers.solverslib.command.Command;
-//import com.seattlesolvers.solverslib.command.CommandOpMode;
-//import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
-//import com.seattlesolvers.solverslib.command.ParallelRaceGroup;
-//import com.seattlesolvers.solverslib.command.SelectCommand;
-//import com.seattlesolvers.solverslib.command.WaitCommand;
-//import com.seattlesolvers.solverslib.command.WaitUntilCommand;
-//import com.seattlesolvers.solverslib.gamepad.GamepadEx;
-//import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-//
-//import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.IntakeAndSorterSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.SorterSubsystem;
-//import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
-//
-//import java.util.HashMap;
-//
-//@Autonomous(name = "Autonomous: Blue Alliance, Far Side")
-//public class BlueFarAutoOpMode extends CommandOpMode {
-//    private VisionSubsystem m_visionSubsystem;
-//    private DriveSubsystem m_driveSubsystem;
-//    private SorterSubsystem m_sorterSubsystem;
-//    private IntakeSubsystem m_intakeSubsystem;
-//    private IntakeAndSorterSubsystem m_intakeAndSorter;
-//    private ShooterSubsystem m_shooterSubsystem;
-//
-//    private static final double CORNER_X = -48.303871;
-//    private static final double CORNER_Y = -63.433975;
-//
-//    private static final double INITIAL_X = CORNER_X + DriveSubsystem.WIDTH / 2;
-//    private static final double INITIAL_Y = CORNER_Y + DriveSubsystem.DEPTH / 2;
-//    private static final double INITIAL_HEADING = 0;
-//
-//    private static final double SHOOT_X = -24;
-//    private static final double SHOOT_Y = -12;
-//
-//    private static final double SHOOT_HEADING =
-//            -(Math.PI - Math.atan((Math.abs(CORNER_Y) - Math.abs(SHOOT_Y)) / (72 - Math.abs(SHOOT_X))));
-//
-//    private static final double SPIKE_START_Y = -24;
-//    private static final double SPIKE_END_Y = -48;
-//
-//    private static final long AUTO_TIMEOUT = 28000;
-//
-//    private static final long PARK_X = 12;
-//    private static final long PARK_Y = -24;
-//
-//    private static final double TAG_X =
-//            -72 + (72 - Math.abs(CORNER_X)) / 2;
-//    private static final double TAG_Y =
-//            Math.abs(CORNER_Y) - (Math.abs(CORNER_Y) - 48) / 2;
-//
-//    private static final double SHOOT_DISTANCE =
-//            Math.sqrt((TAG_X - SHOOT_X) * (TAG_X - SHOOT_X) + (TAG_Y - SHOOT_Y) * (TAG_Y - SHOOT_Y));
-//
-//    private Command m_shootCommand;
-//
-//    private static final double SHOOT_ANGLE = 60;
-//
-//    public Command loadAndShootCommand(double spikeX) { // this assumes that the robot is at the shooting pose
-//        return m_driveSubsystem.action2Command(
-//                m_driveSubsystem.m_drive.actionBuilder(new Pose2d(SHOOT_X, SHOOT_Y, SHOOT_HEADING))
-//                        .turnTo(Math.toRadians(-90))
-//                        .strafeTo(new Vector2d(spikeX, SPIKE_START_Y))
-//                        .build()
-//        ).andThen(
-//                m_intakeAndSorter.intakeCommand()
-//                        .perpetually()
-//                        .raceWith(
-//                                m_driveSubsystem.action2Command(
-//                                        m_driveSubsystem.m_drive
-//                                                .actionBuilder(new Pose2d(spikeX, SPIKE_START_Y, Math.toRadians(-90)))
-//                                                .lineToY(SPIKE_END_Y)
-//                                                .build()
-//                                )
-//                        )
-//        ).andThen(
-//                m_driveSubsystem.action2Command(
-//                        m_driveSubsystem.m_drive.actionBuilder(new Pose2d(spikeX, SPIKE_END_Y, Math.toRadians(-90)))
-//                                .lineToY(SPIKE_START_Y)
-//                                .splineTo(new Vector2d(SHOOT_X, SHOOT_Y), SHOOT_HEADING)
-//                                .build()
-//                )
-//        ).andThen(m_shootCommand);
-//    }
-//
-//    private LiftSubsystem m_liftSubsystem;
-//
-//    @Override
-//    public void initialize() {
-//        m_visionSubsystem = new VisionSubsystem(hardwareMap, telemetry);
-//        Pose2d initialPose = new Pose2d(INITIAL_X, INITIAL_Y, INITIAL_HEADING);
-//        m_driveSubsystem = new DriveSubsystem(hardwareMap, initialPose, telemetry);
-//        m_sorterSubsystem = new SorterSubsystem(hardwareMap);
-//        m_intakeSubsystem = new IntakeSubsystem(hardwareMap, telemetry);
-//        m_intakeAndSorter = new IntakeAndSorterSubsystem(m_intakeSubsystem, m_sorterSubsystem);
-//        m_shooterSubsystem = new ShooterSubsystem(hardwareMap, m_intakeAndSorter, telemetry);
-//        m_liftSubsystem = new LiftSubsystem(hardwareMap);
-//
-//        /* initial artifact positions in the sorter */
-////        m_sorterSubsystem.occupancy[0] = SorterSubsystem.Colour.PURPLE;
-////        m_sorterSubsystem.occupancy[1] = SorterSubsystem.Colour.PURPLE;
-////        m_sorterSubsystem.occupancy[2] = SorterSubsystem.Colour.GREEN;
-//
-//        Command shootPurpleCommand = m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.PURPLE, SHOOT_DISTANCE, SHOOT_ANGLE);
-//        Command shootGreenCommand = m_shooterSubsystem.shootCommand(SorterSubsystem.Colour.GREEN, SHOOT_DISTANCE, SHOOT_ANGLE);
-//
-//        m_shootCommand = new SelectCommand(
-//                new HashMap<Object, Command>(){{
-//                    put(VisionSubsystem.Motif.GPP, shootGreenCommand.andThen(shootPurpleCommand).andThen(shootPurpleCommand));
-//                    put(VisionSubsystem.Motif.PGP, shootPurpleCommand.andThen(shootGreenCommand).andThen(shootPurpleCommand));
-//                    put(VisionSubsystem.Motif.PPG, shootPurpleCommand.andThen(shootPurpleCommand).andThen(shootGreenCommand));
-//                    put(VisionSubsystem.Motif.NONE, shootPurpleCommand.andThen(shootPurpleCommand).andThen(shootGreenCommand)); // fallback
-//                }},
-//                m_visionSubsystem::getMotif
-//        );
-//
-//        Command autoCommand =
-//                new ParallelCommandGroup(
-//                        m_driveSubsystem.action2Command(
-//                                m_driveSubsystem.m_drive.actionBuilder(initialPose)
-//                                        .strafeTo(new Vector2d(SHOOT_X, SHOOT_Y))
-//                                        .turnTo(Math.toRadians(-30))
-//                                        .build()
-//                        ),
-//                        m_intakeAndSorter.getAllColoursCommand(),
-//                        m_liftSubsystem.retractCommand()
-//                ).andThen(
-//                        new ParallelRaceGroup(
-//                                new WaitUntilCommand(() -> {
-//                                    return m_visionSubsystem.getMotif() != VisionSubsystem.Motif.NONE;
-//                                }),
-//                                new WaitCommand(1000)
-//                        )
-//                ).andThen(
-//                        m_driveSubsystem.action2Command(
-//                                m_driveSubsystem.m_drive.actionBuilder(new Pose2d(SHOOT_X, SHOOT_Y, Math.toRadians(-30)))
-//                                        .turnTo(SHOOT_HEADING)
-//                                        .build()
-//                        )
-//                )
-//                .andThen(m_shootCommand)
-//                .andThen(loadAndShootCommand(-12))
-//                .andThen(loadAndShootCommand(12))
-//                .andThen(loadAndShootCommand(36))
-//                .withTimeout(AUTO_TIMEOUT)
-//                .andThen(new SelectCommand(() -> {
-//                    com.seattlesolvers.solverslib.geometry.Pose2d pose = m_driveSubsystem.getPose();
-//                    return m_driveSubsystem.action2Command(
-//                            m_driveSubsystem.m_drive
-//                                    .actionBuilder(new Pose2d(pose.getX(), pose.getY(), pose.getHeading()))
-//                                    .strafeTo(new Vector2d(PARK_X, PARK_Y))
-//                                    .build()
-//                    );
-//                }));
-//
-//        schedule(autoCommand);
-//    }
-//}
+package org.firstinspires.ftc.teamcode;
+
+import static com.pedropathing.ivy.Scheduler.schedule;
+import static com.pedropathing.ivy.groups.Groups.sequential;
+import static com.pedropathing.ivy.pedro.PedroCommands.follow;
+
+import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.ivy.Command;
+import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.ivy.commands.Commands;
+import com.pedropathing.paths.PathChain;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+import org.firstinspires.ftc.teamcode.subsystems.HoodSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.LimelightSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
+
+@Autonomous(name = "blue far auto", group = "Autonomous")
+@Configurable
+public class BlueFarAutoOpMode extends LinearOpMode {
+    private TelemetryManager panelsTelemetry;
+    public Follower follower;
+    private ShooterSubsystem shooter;
+    private IntakeSubsystem intake;
+    private LimelightSubsystem limelight;
+    private HoodSubsystem hood;
+    private Paths paths;
+
+    @Override
+    public void runOpMode() {
+        panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
+
+        // FIX: follower was previously built TWICE -- once here, once again right
+        // before waitForStart(). paths.MainChain was built against the FIRST
+        // follower object, which then got discarded when the second was assigned,
+        // potentially detaching the path from the follower actually driving.
+        // Now built exactly once.
+        follower = Constants.createFollower(hardwareMap);
+
+        // FIX: `1-Math.toRadians(90)` (~-0.57 rad) looked like a typo for
+        // `-Math.toRadians(90)` (-90 deg exactly). Flagging and correcting --
+        // double check this matches your intended starting heading.
+        follower.setStartingPose(new Pose(84.101, 3.74, -Math.toRadians(90)));
+
+        // FIX: construction order corrected so ShooterSubsystem receives REAL
+        // intake/hood/limelight references instead of null. Previously:
+        //   shooter = new ShooterSubsystem(hardwareMap, telemetry, intake, hood, limelight);
+        //   intake = new IntakeSubsystem(...);   // assigned AFTER shooter needed it
+        //   hood = new HoodSubsystem(...);       // assigned AFTER shooter needed it
+        // and `limelight` was NEVER constructed at all (declared, never `new`'d).
+        intake = new IntakeSubsystem(hardwareMap, telemetry);
+        hood = new HoodSubsystem(hardwareMap);
+        limelight = new LimelightSubsystem(hardwareMap, telemetry, null); // no DriveSubsystem
+        // in this Pedro-based auto;
+        // LimelightSubsystem falls
+        // back to botpose heading
+        shooter = new ShooterSubsystem(hardwareMap, telemetry, intake, hood, limelight);
+
+        // FIX: paths now built AFTER the (single) final follower + starting pose
+        // are set, so the path is bound to the follower that's actually running.
+        paths = new Paths(follower);
+
+        panelsTelemetry.debug("Status", "Initialized");
+        panelsTelemetry.update(telemetry);
+
+        Scheduler.reset();
+
+        waitForStart();
+
+        schedule(autoRoutine());
+        while (opModeIsActive()) {
+            follower.update();
+            Scheduler.execute();
+
+            // FIX (addition): LimelightSubsystem.periodic() is normally driven by
+            // SolversLib's CommandScheduler via register(...), but this Pedro-based
+            // auto never registers subsystems and never runs that scheduler --
+            // only Pedro's own ivy Scheduler.execute() above. Without this manual
+            // pump, LimelightSubsystem's cached LLResult (see its caching fix)
+            // would stay null forever and every distance read below would return
+            // NaN the whole match.
+            limelight.periodic();
+
+            telemetry.addData("x", follower.getPose().getX());
+            telemetry.addData("y", follower.getPose().getY());
+            telemetry.addData("heading", follower.getPose().getHeading());
+            telemetry.addData("distance to target", limelight.getDistanceTrig());
+            telemetry.update();
+
+            panelsTelemetry.debug("x", follower.getPose().getX());
+            panelsTelemetry.debug("y", follower.getPose().getY());
+            panelsTelemetry.update(telemetry);
+        }
+
+        // FIX (addition): ensure motors are off when auto ends -- previously
+        // nothing stopped the shooter/intake at the end of the routine or loop,
+        // so they'd hold their last commanded power indefinitely.
+        shooter.setPower(0);
+        intake.setPower(0);
+    }
+
+    public static class Paths {
+        public PathChain MainChain;
+
+        public Paths(Follower follower) {
+            MainChain = follower.pathBuilder()
+                    .addPath(
+                            new BezierLine(
+                                    new Pose(84.101, 3.742),
+                                    new Pose(46.491, 100.150)
+                            )
+                    )
+                    // FIX: same typo pattern as the starting pose above.
+                    .setLinearHeadingInterpolation(-Math.toRadians(60), -Math.toRadians(84))
+                    .build();
+        }
+    }
+
+    public Command autoRoutine() {
+        return sequential(
+                follow(follower, paths.MainChain),
+                Commands.waitMs(500),
+
+                // FIX: this used to be
+                //   Commands.instant(() -> new ParallelCommandGroup(shooter.runAtPowerCommand(0.5), new WaitCommand(500)))
+                // which CONSTRUCTS a SolversLib ParallelCommandGroup object and
+                // immediately discards it -- nothing ever called .schedule() on it,
+                // AND this loop never pumps SolversLib's CommandScheduler in the
+                // first place (only Pedro's own Scheduler.execute()), so it could
+                // never have run regardless. Replaced with direct method calls
+                // sequenced through Pedro's own Commands/Scheduler, which IS being
+                // pumped every loop above.
+                Commands.instant(() -> shooter.setPower(0.5)),
+                Commands.waitMs(500),
+
+                Commands.instant(() -> {
+                    shooter.setPower(-0.7);
+                    intake.setPower(1.0);
+                }),
+                Commands.waitMs(3000),
+
+                // FIX (addition): explicit stop step -- nothing previously turned
+                // the shooter/intake back off at the end of the routine.
+                Commands.instant(() -> {
+                    shooter.setPower(0);
+                    intake.setPower(0);
+                })
+        );
+    }
+}

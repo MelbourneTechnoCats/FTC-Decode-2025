@@ -11,10 +11,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-/**
- * Simple IntakeSubsystem with a single motor.
- * Supports normal intake/outtake + pre-shoot reverse sequence.
- */
 @Config
 public class IntakeSubsystem extends SubsystemBase {
 
@@ -23,11 +19,13 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private final Telemetry telemetry;
 
-    // Tunables
-    public static double IN_POWER = 10000.0;
+    // FIX: was 10000.0 -- motor power range the SDK accepts is [-1, 1], so this was
+    // being silently clamped to 1.0 internally. It "worked" only by accident, and
+    // gave a false impression this constant was tuned. Set to a proper value.
+    public static double IN_POWER = 1.0;
     public static double OUT_POWER = -0.7;
     public static double PRE_SHOOT_REVERSE_POWER = -0.6;
-    public static double PRE_SHOOT_REVERSE_TIME_MS = 180;   // time to reverse before shooting
+    public static double PRE_SHOOT_REVERSE_TIME_MS = 180;
 
     public IntakeSubsystem(HardwareMap hardwareMap, Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -37,18 +35,23 @@ public class IntakeSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-//        telemetry.addData("Intake Power", m_intake.);
     }
 
-    // ====================== Basic Commands ======================
-
+    // FIX: previously hardcoded magic number `10` instead of referencing IN_POWER at
+    // all. That meant tuning IN_POWER via FTC Dashboard had ZERO effect on normal
+    // intake running -- only on the pre-shoot sequence, which used the constant
+    // correctly. `10` also gets clamped to `1` internally same as the old IN_POWER
+    // bug above -- same accidental-correctness trap.
     public Command runCommand() {
         return new ParallelCommandGroup(
-                m_intake.setPowerCommand(() ->10),
-                m_boost.setPowerCommand(() -> 10)
+                m_intake.setPowerCommand(() -> IN_POWER),
+                m_boost.setPowerCommand(() -> IN_POWER)
         );
     }
 
+    // NOTE: this method is never called from any OpMode -- either dead code left
+    // over from an earlier iteration, or a missing button binding. Flagging rather
+    // than deleting since I don't know which was intended.
     public Command runBoostAndMotor() {
         return new ParallelCommandGroup(
                 m_intake.setPowerCommand(-1.0),
@@ -70,12 +73,6 @@ public class IntakeSubsystem extends SubsystemBase {
         );
     }
 
-    // ====================== Pre-Shoot Sequence ======================
-
-    /**
-     * Prepares intake for shooting: reverses briefly, then runs full speed forward.
-     * This command should run in parallel with shooter spin-up.
-     */
     public Command preShootIntakeCommand() {
         return new SequentialCommandGroup(
                 new InstantCommand(() -> {
@@ -90,7 +87,6 @@ public class IntakeSubsystem extends SubsystemBase {
         );
     }
 
-    // Direct access (if needed)
     public void setPower(double power) {
         m_intake.setRawPower(power);
     }

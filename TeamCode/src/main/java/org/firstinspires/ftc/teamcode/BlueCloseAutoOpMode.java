@@ -26,9 +26,9 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 import java.util.Timer;
 
-@Autonomous(name = "red far auto", group = "Autonomous")
+@Autonomous(name = "blue close auto", group = "Autonomous")
 @Configurable // Panels
-public class RedFarAutoOpMode extends LinearOpMode {
+public class BlueCloseAutoOpMode extends LinearOpMode {
     private TelemetryManager panelsTelemetry; // Panels Telemetry instance
     public Follower follower; // Pedro Pathing follower instance
     private ShooterSubsystem shooter;
@@ -85,25 +85,27 @@ public class RedFarAutoOpMode extends LinearOpMode {
             auto = follower.pathBuilder()
                     .addPath(
                             new BezierLine(
-                                    new Pose(84.640, 7.291),
-                                    new Pose(65.074, 92.430)
+                                    new Pose(41.538, 140.851),
+                                    new Pose(78.402, 104.198)
                             )
                     )
                     .setTangentHeadingInterpolation()
                     .addPath(
                             new BezierLine(
-                                    new Pose(65.074, 92.430),
-                                    new Pose(60.678, 96.802)
+                                    new Pose(78.402, 104.198),
+                                    new Pose(85.632, 108.428)
                             )
                     )
                     .setTangentHeadingInterpolation()
+
                     .build();
-            after = follower.pathBuilder().addPath(
-                    new BezierLine(
-                            new Pose(62.096, 92.832),
-                            new Pose(60.158, 37.311)
+            after = follower.pathBuilder()
+                    .addPath(
+                            new BezierLine(
+                                    new Pose(85.632, 108.428),
+                                    new Pose(60.158, 37.311)
+                            )
                     )
-            )
                     .setTangentHeadingInterpolation()
                     .build();
 

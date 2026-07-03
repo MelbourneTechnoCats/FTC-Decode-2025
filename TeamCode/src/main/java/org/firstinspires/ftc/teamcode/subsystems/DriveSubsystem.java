@@ -39,12 +39,11 @@ public class DriveSubsystem extends SubsystemBase {
         m_vision.m_poseTrigger.whileActiveContinuous(
                 new RunCommand(() -> {
                     setPose(m_vision.getLastPose());
-                })  
+                })
         );
     }
 
-    public ActionCommand action2Command(Action action)
-    {
+    public ActionCommand action2Command(Action action) {
         return new ActionCommand(action, this);
     }
 
@@ -52,15 +51,21 @@ public class DriveSubsystem extends SubsystemBase {
     public void periodic() {
         Rotation2d heading = getHeading();
 
-        m_telemetry.update();
+        // FIX: removed m_telemetry.update() from here. This was being called BEFORE
+        // other subsystems (Hood, Shooter, Turret, Limelight) got a chance to add
+        // their own telemetry lines in the same scheduler pass -- subsystem periodic()
+        // execution order isn't guaranteed to run DriveSubsystem last. Meanwhile
+        // DriveOpMode.run() ALSO calls telemetry.update() at the end of the loop, so
+        // this was flushing a half-populated buffer TWICE per loop, causing
+        // intermittent missing/flickering fields on the Driver Station. Now there's
+        // exactly one update() call, owned by the OpMode, at the true end of the loop.
 
-       Vector2d linearVelocity =
-                new Vector2d(m_xSpeed, m_ySpeed);
+        Vector2d linearVelocity = new Vector2d(m_xSpeed, m_ySpeed);
         if (m_fieldCentric) {
             linearVelocity = linearVelocity.rotateBy(-heading.getDegrees());
         }
 
-         m_drive.setDrivePowers(
+        m_drive.setDrivePowers(
                 new PoseVelocity2d(
                         new com.acmerobotics.roadrunner.Vector2d(
                                 linearVelocity.getY(), -linearVelocity.getX()
@@ -70,34 +75,29 @@ public class DriveSubsystem extends SubsystemBase {
         );
 
         PoseVelocity2d rrVel = m_drive.updatePoseEstimate();
-
         m_fieldVelocity = new com.seattlesolvers.solverslib.geometry.Vector2d(rrVel.linearVel.x, rrVel.linearVel.y);
-
     }
 
-
     public void drive(double xSpeed, double ySpeed, double rotSpeed, boolean fieldCentric) {
-        // m_xSpeed, m_ySpeed and m_rotSpeed are unitless
         m_xSpeed = xSpeed;
         m_ySpeed = ySpeed;
         m_rotSpeed = rotSpeed;
         m_fieldCentric = fieldCentric;
     }
+
     public com.seattlesolvers.solverslib.geometry.Vector2d getFieldVelocity() {
         return m_fieldVelocity;
     }
 
     public Rotation2d getHeading() {
-        double heading = m_drive.localizer.getPose().heading.toDouble(); // in radians
+        double heading = m_drive.localizer.getPose().heading.toDouble();
         return new Rotation2d(heading);
     }
-
 
     public void setPose(com.seattlesolvers.solverslib.geometry.Pose2d pose) {
         Pose2d rrPose = new Pose2d(pose.getX(), pose.getY(), pose.getHeading());
         m_drive.localizer.setPose(rrPose);
     }
-
 
     public com.seattlesolvers.solverslib.geometry.Pose2d getPose() {
         Pose2d rrPose = m_drive.localizer.getPose();
