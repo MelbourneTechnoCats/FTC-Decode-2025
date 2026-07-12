@@ -43,8 +43,8 @@ public class TurretSubsystem extends SubsystemBase {
     // turret's absolute position against a safe range -- sustained tracking or
     // an errant joystick input could wind it past its mechanical stop and damage
     // the wiring. TUNE THESE to your turret's real safe travel range in degrees.
-    public static double kMinTurretDeg = -150.0;
-    public static double kMaxTurretDeg = 150.0;
+    public static double kMinTurretDeg = -30060.0;
+    public static double kMaxTurretDeg = 30060.0;
 
     private long m_lastSeenTime = 0;
     private boolean m_isTracking = false;
@@ -101,7 +101,7 @@ public class TurretSubsystem extends SubsystemBase {
     public double computeTrackingPower() {
         if (m_vision == null) return 0;
 
-        double tx = getCurrentTx();
+        double tx = m_vision.getTX();
         if (Double.isNaN(tx)) return 0;
         if (!m_vision.hasTarget()) return 0;
 

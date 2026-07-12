@@ -1,18 +1,19 @@
-package org.firstinspires.ftc.teamcode.pedroPathing;
+package org.firstinspires.ftc.teamcode;
 
 import static com.pedropathing.math.MathFunctions.quadraticFit;
-import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.changes;
-import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.drawCurrent;
-import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.drawCurrentAndHistory;
-import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
-import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.stopRobot;
-import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.telemetryM;
+import static org.firstinspires.ftc.teamcode.Tuning.changes;
+import static org.firstinspires.ftc.teamcode.Tuning.drawCurrent;
+import static org.firstinspires.ftc.teamcode.Tuning.drawCurrentAndHistory;
+import static org.firstinspires.ftc.teamcode.Tuning.follower;
+import static org.firstinspires.ftc.teamcode.Tuning.stopRobot;
+import static org.firstinspires.ftc.teamcode.Tuning.telemetryM;
 
 import android.annotation.SuppressLint;
 
 import com.bylazar.configurables.PanelsConfigurables;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.configurables.annotations.IgnoreConfigurable;
+
 import com.bylazar.field.FieldManager;
 import com.bylazar.field.PanelsField;
 import com.bylazar.field.Style;
@@ -33,8 +34,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.teamcode.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +83,7 @@ public class Tuning extends SelectableOpMode {
             s.folder("Tests", p -> {
                 p.add("Line", Line::new);
                 p.add("Triangle", Triangle::new);
-                p.add("Circle", Circle::new);
+                p.add("Circle", vCircle::new);
             });
             s.folder("Swerve", p-> {
                 p.add("Analog Min / Max Tuner", AnalogMinMaxTuner::new);
@@ -115,15 +114,15 @@ public class Tuning extends SelectableOpMode {
 
     public static void drawCurrent() {
         try {
-            Drawing.drawRobot(follower.getPose());
-            Drawing.sendPacket();
+            vDrawing.drawRobot(follower.getPose());
+            vDrawing.sendPacket();
         } catch (Exception e) {
-            throw new RuntimeException("Drawing failed " + e);
+            throw new RuntimeException("vDrawing failed " + e);
         }
     }
 
     public static void drawCurrentAndHistory() {
-        Drawing.drawPoseHistory(poseHistory);
+        vDrawing.drawPoseHistory(poseHistory);
         drawCurrent();
     }
 
@@ -364,7 +363,7 @@ class TurnTuner extends OpMode {
  */
 class ForwardVelocityTuner extends OpMode {
     private final ArrayList<Double> velocities = new ArrayList<>();
-    public static double DISTANCE = 48;
+    public static double DISTANCE = 12;
     public static double RECORD_NUMBER = 10;
 
     private boolean end;
@@ -472,7 +471,7 @@ class ForwardVelocityTuner extends OpMode {
 class LateralVelocityTuner extends OpMode {
     private final ArrayList<Double> velocities = new ArrayList<>();
 
-    public static double DISTANCE = 48;
+    public static double DISTANCE = 12;
     public static double RECORD_NUMBER = 10;
 
     private boolean end;
@@ -1379,7 +1378,7 @@ class Triangle extends OpMode {
  * @author Harrison Womack - 10158 Scott's Bots
  * @version 1.0, 3/12/2024
  */
-class Circle extends OpMode {
+class vCircle extends OpMode {
     public static double RADIUS = 10;
     private PathChain circle;
 
@@ -1652,12 +1651,12 @@ class OffsetsTuner extends OpMode {
 
 
 /**
- * This is the Drawing class. It handles the drawing of stuff on Panels Dashboard, like the robot.
+ * This is the vDrawing class. It handles the drawing of stuff on Panels Dashboard, like the robot.
  *
  * @author Lazar - 19234
  * @version 1.1, 5/19/2025
  */
-class Drawing {
+class vDrawing {
     public static final double ROBOT_RADIUS = 9; // woah
     private static final FieldManager panelsField = PanelsField.INSTANCE.getField();
 

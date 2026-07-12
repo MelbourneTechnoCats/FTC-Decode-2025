@@ -16,17 +16,16 @@ import com.pedropathing.ivy.commands.Commands;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
 
 import org.firstinspires.ftc.teamcode.subsystems.HoodSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LimelightSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 
 import java.util.Timer;
 
-@Autonomous(name = "blue far auto", group = "Autonomous")
+@Autonomous(name = "blue far auto - wait 20s then leave", group = "Autonomous")
 @Configurable // Panels
 public class BlueFarAutoOpMode extends LinearOpMode {
     private TelemetryManager panelsTelemetry; // Panels Telemetry instance
@@ -34,6 +33,7 @@ public class BlueFarAutoOpMode extends LinearOpMode {
     private ShooterSubsystem shooter;
     private IntakeSubsystem intake;
     private LimelightSubsystem limelight;
+    private TurretSubsystem turret;
     private HoodSubsystem hood;
     private int pathState; // Current autonomous path state (state machine)
     private Timer pathTimer, opTimer;
@@ -46,7 +46,11 @@ public class BlueFarAutoOpMode extends LinearOpMode {
 
         follower = Constants.createFollower(hardwareMap);
         shooter = new ShooterSubsystem(hardwareMap, telemetry, intake, hood, limelight);
-        follower.setStartingPose(new Pose(72, 8, Math.toRadians(90)));
+        intake = new IntakeSubsystem(hardwareMap, telemetry);
+        turret = new TurretSubsystem(hardwareMap, telemetry);
+
+
+        follower.setStartingPose(new Pose(0, 0, Math.toRadians(0)));
         pathTimer = new Timer();
         opTimer = new Timer();
 
@@ -62,8 +66,8 @@ public class BlueFarAutoOpMode extends LinearOpMode {
 
         waitForStart();
         //We schedule all our commands when we start the OpMode
-        schedule(new AutoCommands(hardwareMap,telemetry).shootSequence());
-        schedule(sequential(follow(follower, new Paths(follower).auto)));
+//        schedule(new AutoCommands(hardwareMap,telemetry).shootSequence());
+        schedule(autoRoutine());
         while (opModeIsActive()) {
             //Update the follower and execute the scheduler every loop
             follower.update();
@@ -78,51 +82,28 @@ public class BlueFarAutoOpMode extends LinearOpMode {
     }
 
     public static class Paths {
-        public PathChain auto;
-        public PathChain after;
+        public PathChain leave;
 
         public Paths(Follower follower) {
-            auto = follower.pathBuilder()
+            leave = follower.pathBuilder()
                     .addPath(
                             new BezierLine(
-                                    new Pose(84.640, 7.291),
-                                    new Pose(65.074, 92.430)
+                                    new Pose(0.000, 0.000),
+                                    new Pose(0.000, 26.000)
                             )
                     )
-                    .setTangentHeadingInterpolation()
-                    .addPath(
-                            new BezierLine(
-                                    new Pose(65.074, 92.430),
-                                    new Pose(60.678, 96.802)
-                            )
-                    )
-                    .setTangentHeadingInterpolation()
+                    .setConstantHeadingInterpolation(Math.toRadians(0))
                     .build();
-            after = follower.pathBuilder().addPath(
-                            new BezierLine(
-                                    new Pose(62.096, 92.832),
-                                    new Pose(60.158, 37.311)
-                            )
-                    )
-                    .setTangentHeadingInterpolation()
-                    .build();
-
         }
     }
 
     public Command autoRoutine() {
         return sequential(
-                follow(follower, paths.auto),
-                Commands.waitMs(500),
-                Commands.instant(() -> new ParallelCommandGroup(shooter.runAtPowerCommand(0.5), new WaitCommand(500))),
+                Commands.waitMs(5000),
+                follow(follower, paths.leave)
 
-                Commands.instant(() -> new ParallelCommandGroup(
-                        shooter.runAtPowerCommand(-0.7),
-                        intake.runCommand(),
-                        new WaitCommand(3000)
-                )),
-                follow(follower, paths.after
-                )
+
+
         );
     }
     /** These change the states of the paths and actions. It will also reset the timers of the individual switches **/

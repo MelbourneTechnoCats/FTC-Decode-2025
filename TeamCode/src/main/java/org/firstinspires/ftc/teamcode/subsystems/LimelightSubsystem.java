@@ -53,7 +53,7 @@ public class LimelightSubsystem extends SubsystemBase {
 
         limelight.start();
         limelight.setPollRateHz(100);
-        setPipeline(1);
+        setPipeline(2);
     }
 
     @Override
@@ -73,8 +73,10 @@ public class LimelightSubsystem extends SubsystemBase {
                 for (LLResultTypes.FiducialResult f : fiducials) {
                     if (f.getFiducialId() == BLUE_TAG_ID) {
                         blueTx = f.getTargetXDegrees();
+                        tx=blueTx;
                     } else if (f.getFiducialId() == RED_TAG_ID) {
                         redTx = f.getTargetXDegrees();
+                        tx=redTx;
                     }
                 }
             }

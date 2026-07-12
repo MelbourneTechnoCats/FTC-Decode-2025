@@ -12,12 +12,9 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
-import com.pedropathing.ivy.commands.Commands;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
 
 import org.firstinspires.ftc.teamcode.subsystems.HoodSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
@@ -63,6 +60,7 @@ public class RedCloseAutoOpMode extends LinearOpMode {
 
         waitForStart();
         //We schedule all our commands when we start the OpMode
+        schedule(new AutoCommands(hardwareMap,telemetry).shootSequence());
         schedule(autoRoutine());
         while (opModeIsActive()) {
             //Update the follower and execute the scheduler every loop
@@ -112,17 +110,8 @@ public class RedCloseAutoOpMode extends LinearOpMode {
 
     public Command autoRoutine() {
         return sequential(
-                follow(follower, paths.auto),
-                Commands.waitMs(500),
-                Commands.instant(() -> new ParallelCommandGroup(shooter.runAtPowerCommand(0.5), new WaitCommand(1000))),
+                follow(follower, paths.auto)
 
-                Commands.instant(() -> new ParallelCommandGroup(
-                        shooter.runAtPowerCommand(-0.7),
-                        intake.runCommand(),
-                        new WaitCommand(3000)
-                )),
-                follow(follower, paths.after
-                )
 
 
         );
@@ -131,5 +120,4 @@ public class RedCloseAutoOpMode extends LinearOpMode {
     public void setPathState(int pState) {
         pathState = pState;
 
-    }
-}
+    }}

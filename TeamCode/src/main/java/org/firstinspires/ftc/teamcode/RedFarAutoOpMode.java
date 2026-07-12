@@ -63,7 +63,8 @@ public class RedFarAutoOpMode extends LinearOpMode {
 
         waitForStart();
         //We schedule all our commands when we start the OpMode
-        schedule(autoRoutine());
+        schedule(new AutoCommands(hardwareMap,telemetry).shootSequence());
+        schedule(sequential(follow(follower, new Paths(follower).auto)));
         while (opModeIsActive()) {
             //Update the follower and execute the scheduler every loop
             follower.update();

@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.groups.Groups.sequential;
-import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
@@ -16,8 +15,6 @@ import com.pedropathing.ivy.commands.Commands;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
 
 import org.firstinspires.ftc.teamcode.subsystems.HoodSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
@@ -46,7 +43,9 @@ public class BlueCloseAutoOpMode extends LinearOpMode {
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
 
         follower = Constants.createFollower(hardwareMap);
+
         shooter = new ShooterSubsystem(hardwareMap, telemetry, intake, hood, limelight);
+        intake = new IntakeSubsystem(hardwareMap, telemetry);
         follower.setStartingPose(new Pose(72, 8, Math.toRadians(90)));
         pathTimer = new Timer();
         opTimer = new Timer();
@@ -63,7 +62,7 @@ public class BlueCloseAutoOpMode extends LinearOpMode {
 
         waitForStart();
         //We schedule all our commands when we start the OpMode
-        schedule(autoRoutine());
+        schedule(new AutoCommands(hardwareMap,telemetry).shootWithIntakePulses());
         while (opModeIsActive()) {
             //Update the follower and execute the scheduler every loop
             follower.update();
@@ -112,21 +111,55 @@ public class BlueCloseAutoOpMode extends LinearOpMode {
         }
     }
 
-    public Command autoRoutine() {
+    public Command shootSequence() {
         return sequential(
-                follow(follower, paths.auto),
+                // spin shooter up alone first (inverted, so negative power)
+                Commands.instant(() -> shooter.setPower(-1)),
                 Commands.waitMs(500),
-                Commands.instant(() -> new ParallelCommandGroup(shooter.runAtPowerCommand(0.5), new WaitCommand(500))),
 
-                Commands.instant(() -> new ParallelCommandGroup(
-                        shooter.runAtPowerCommand(-0.7),
-                        intake.runCommand(),
-                        new WaitCommand(3000)
-                )),
-                follow(follower, paths.after
-                )
+                // now bring intake in while shooter keeps running
+                Commands.instant(() -> {
+                    shooter.setPower(-1);
+                    intake.setPower(1.0);
+                }),
+                Commands.waitMs(3000),
 
+                // stop everything at the end
+                Commands.instant(() -> {
+                    shooter.setPower(0);
+                    intake.setPower(0);
+                })
+        );
+    }
+    public Command shootWithIntakePulses() {
+        return sequential(
+                // spin shooter up alone for 1s
+                Commands.instant(() -> shooter.setPower(-1)),
+                Commands.waitMs(1000),
 
+                // pulse 1
+                Commands.instant(() -> { shooter.setPower(-1); intake.setPower(1.0); }),
+                Commands.waitMs(500),
+                Commands.instant(() -> { shooter.setPower(-1); intake.setPower(0.0); }),
+                Commands.waitMs(500),
+
+                // pulse 2
+                Commands.instant(() -> { shooter.setPower(-1); intake.setPower(1.0); }),
+                Commands.waitMs(500),
+                Commands.instant(() -> { shooter.setPower(-1); intake.setPower(0.0); }),
+                Commands.waitMs(500),
+
+                // pulse 3
+                Commands.instant(() -> { shooter.setPower(-1); intake.setPower(1.0); }),
+                Commands.waitMs(500),
+                Commands.instant(() -> { shooter.setPower(-1); intake.setPower(0.0); }),
+                Commands.waitMs(500),
+
+                // stop everything at the end
+                Commands.instant(() -> {
+                    shooter.setPower(0);
+                    intake.setPower(0);
+                })
         );
     }
     /** These change the states of the paths and actions. It will also reset the timers of the individual switches **/
